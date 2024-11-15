@@ -40,7 +40,10 @@ const LeftSideBar = () => {
         </div>
         <ul className="mt-4">
           {leftSideBarMenuItems.map((item) => {
-            const isActive = pathName === item.href
+            let isActive = pathName === item.href
+            if(item.title === "Profile" && pathName === '/'){
+              isActive = false
+            }
             return (
               <li key={item.title}>
                 <Link
