@@ -29,24 +29,23 @@ export class TweetService{
 
         if (!ctx.user) throw new Error("Please Login To Post a Tweet!")
 
-        if (!process.env.AWS_ACCESS_KEY || !process.env.AWS_SECRET_ACCESS_KEY){
+        if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY){
             throw new Error("AWS Env Variables Cannot be Null!!!")
         }
         
-        const allowedTypes = ['image/jpeg','image/webp','image/png','image/jpg','image/heic','image/gif']
+        const allowedTypes = ['image/jpeg', 'image/webp', 'image/png','image/jpg', 'image/heic', 'image/gif']
 
         if(!allowedTypes.includes(imageType)){
             throw new Error("Please Provide A Valid Image Type !!!")
         }
 
-        const client = new S3Client(
-            // { // we donot need to provide this for aws aws automatically get its values from .env but name must be same as docs.
-            // region:'ap-south-1',
-            // credentials:{
-            //     accessKeyId:process.env.AWS_ACCESS_KEY,
-            //     secretAccessKey:process.env.AWS_SECRET_ACCESS_KEY
-            // }}
-        )
+        const client = new S3Client({ 
+                region:'ap-south-1',
+                credentials:{
+                    accessKeyId:process.env.AWS_ACCESS_KEY_ID,
+                    secretAccessKey:process.env.AWS_SECRET_ACCESS_KEY
+                }
+            })
 
         const putCommand = new PutObjectCommand({
             Bucket:process.env.AWS_BUCKET,
