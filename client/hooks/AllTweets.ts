@@ -17,6 +17,7 @@ export const useCreateNewTweet = () => {
     mutationFn :   (payload:CreateTweetData) =>  graphQLClient.request<{ createTweet: Tweet }>(createNewTweet, {payload}),   
     onSuccess: (newTweetData) => {
       queryClient.setQueryData<{getAllTweets:Tweet[]} | undefined>(['get-all-tweets'],(oldData) => {
+        // console.log("oldData",oldData);
         const oldTweets = oldData?.getAllTweets || []
         const newTweet = newTweetData.createTweet;
         return {getAllTweets:[...oldTweets,newTweet]}
