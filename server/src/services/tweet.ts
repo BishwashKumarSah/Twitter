@@ -55,4 +55,6 @@ export class TweetService{
         const signedUrl = getSignedUrl(client,putCommand,{expiresIn:1200})
         return signedUrl
     }
+
+    
 }

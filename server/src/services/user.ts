@@ -93,4 +93,31 @@ export class UserService{
         return user
     }
 
+    public static async followUser(followerId:string,followingId:string){
+        const result = await prismaClient.follows.create({
+            data:{
+                followerId,
+                followingId
+            }
+        })
+        if(result){
+            return true
+        }
+        return false
+    }
+
+    public static async followUserr(followerId:string,followingId:string){
+        const result = await prismaClient.follows.create({
+            data:{
+                follower:{connect:{id:followerId}},
+                following:{connect:{id:followingId}},
+            }
+        })
+        if(result){
+            return true
+        }
+        return false
+    }
+
+    
 }
