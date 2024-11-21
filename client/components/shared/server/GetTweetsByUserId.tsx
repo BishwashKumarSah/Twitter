@@ -17,7 +17,8 @@ const GetTweetsByUserId = async ({ userId }: { userId: string }) => {
   const token = await getCookies();
   const graphQLClient = createGraphQLClient(token);
 
-  const allTweetsByUserIdQuery = await queryClient.prefetchQuery({
+  // const allTweetsByUserIdQuery = 
+  await queryClient.prefetchQuery({
     queryKey: ["all-user-tweets-byId", userId],
     queryFn: async () => {
       try {
@@ -30,10 +31,10 @@ const GetTweetsByUserId = async ({ userId }: { userId: string }) => {
       }
     },
   });
-  console.log(
-    "prefetchQueryAllTweetsByUserIdQuery server GetTweetsByUserId",
-    allTweetsByUserIdQuery
-  );
+  // console.log(
+  //   "prefetchQueryAllTweetsByUserIdQuery server GetTweetsByUserId",
+  //   allTweetsByUserIdQuery
+  // );
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

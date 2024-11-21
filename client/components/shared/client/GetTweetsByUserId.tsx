@@ -1,20 +1,32 @@
 "use client";
 
+import { createGraphQLClient } from "@/clients/api";
 import FeedCard from "@/components/shared/feedcard/FeedCard";
 import { Tweet } from "@/gql/graphql";
+import {
+  handleFollowUserMutation,
+  handleUnFollowUserMutation,
+} from "@/graphql/mutate/user";
 import { useGetAllTweetsByUserId } from "@/hooks/AllTweets";
+import { useCurrentUser } from "@/hooks/user";
+import { useCookie } from "@/utils/CookieProvider";
+import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 
-import React from "react";
+import React, { useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
 import { FiArrowLeft } from "react-icons/fi";
 
 const Profile = () => {
-  
-  const router = useRouter()
+  const router = useRouter();
   const { id } = useParams();
   const userId = typeof id === "string" ? id : "";
+
+  const queryClient = useQueryClient();
+
+  const { cookie } = useCookie();
+  const graphQLClient = createGraphQLClient(cookie);
 
   const {
     userInfo: userData,
@@ -23,6 +35,33 @@ const Profile = () => {
     isLoading,
     isError,
   } = useGetAllTweetsByUserId(userId);
+
+  const { user: currentUser } = useCurrentUser();
+
+  const handleFollowUser = useCallback(async () => {
+    if (!userId || userId === "") return;
+    await graphQLClient.request(handleFollowUserMutation, { to: userId });
+    await queryClient.invalidateQueries({ queryKey: ["current-user"] });
+  }, [graphQLClient, queryClient, userId]);
+
+  const handleUnFollowUser = useCallback(async () => {
+    if (!userId || userId === "") return;
+    await graphQLClient.request(handleUnFollowUserMutation, { to: userId });
+    await queryClient.invalidateQueries({ queryKey: ["current-user"] });
+  }, [graphQLClient, queryClient, userId]);
+
+  const isFollowing = useMemo(() => {
+    console.log("following", currentUser?.following, currentUser?.id, userId);
+    if (!userId || userId === "") return false;
+    if (
+      currentUser?.following &&
+      currentUser?.following?.length > 0 &&
+      currentUser?.following?.findIndex((el) => el.id === userId) >= 0
+    ) {
+      return true;
+    }
+    return false;
+  }, [currentUser?.following, currentUser?.id, userId]);
 
   if (isLoading) {
     return (
@@ -37,22 +76,27 @@ const Profile = () => {
   }
 
   const handleBackButton = () => {
-    router.back()
-  }
+    router.back();
+  };
 
   return (
     isFetched &&
     userData && (
       <>
         <nav className="w-full  flex items-center gap-6 p-3">
-          <div className="hover:bg-slate-800 p-2  rounded-full transition-all cursor-pointer" onClick={handleBackButton}>
+          <div
+            className="hover:bg-slate-800 p-2  rounded-full transition-all cursor-pointer"
+            onClick={handleBackButton}
+          >
             <FiArrowLeft className="text-2xl " />
           </div>
           <div className="flex flex-col gap-1">
-          <h1 className="text-xl font-bold">{`${userData.firstName} ${
-                userData.lastName ?? ""
-              }`}</h1>
-            <p className="text-sm  text-gray-400">{`${tweetData?.length} ${tweetData?.length && tweetData?.length > 1 ? 'Tweets':'Tweet'}`}</p>
+            <h1 className="text-xl font-bold">{`${userData.firstName} ${
+              userData.lastName ?? ""
+            }`}</h1>
+            <p className="text-sm  text-gray-400">{`${tweetData?.length} ${
+              tweetData?.length && tweetData?.length > 1 ? "Tweets" : "Tweet"
+            }`}</p>
           </div>
         </nav>
         {userData && (
@@ -66,10 +110,35 @@ const Profile = () => {
                 alt="Profile"
               />
             )}
-            <div>
-              <h1 className="text-xl font-bold">{`${userData.firstName} ${
-                userData.lastName ?? ""
-              }`}</h1>
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-xl font-bold">
+                  {`${userData.firstName} ${userData.lastName ?? ""}`}
+                </h1>
+                <div className="text-md text-gray-400 flex gap-5 mt-2 font-bold">
+                  <span>{userData?.follower?.length} followers</span>
+                  <span>{userData?.following?.length} following</span>
+                </div>
+              </div>
+              {currentUser?.id !== userId && (
+                <>
+                  {!isFollowing ? (
+                    <button
+                      className="bg-white text-black px-3 py-1 rounded-full text-md"
+                      onClick={handleFollowUser}
+                    >
+                      follow
+                    </button>
+                  ) : (
+                    <button
+                      className="bg-white text-black px-3 py-1 rounded-full text-md"
+                      onClick={handleUnFollowUser}
+                    >
+                      unfollow
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
         )}

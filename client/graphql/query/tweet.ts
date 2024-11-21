@@ -24,7 +24,21 @@ export const getAllTweetsByUserId = graphql(`#graphql
             firstName
             lastName
             email
-            profileImageUrl    
+            profileImageUrl
+            following{
+                id
+                firstName
+                lastName
+                email
+                profileImageUrl
+            }
+            follower{
+                id
+                firstName
+                lastName
+                email
+                profileImageUrl
+            }    
             tweet {
                 id
                 content

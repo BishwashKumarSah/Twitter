@@ -34,19 +34,20 @@ model User {
   profileImageUrl String?
   tweets          Tweet[]
 
-  follower  Follows[] @relation("UserFollowing")
-  following Follows[] @relation("UserFollower")
+  follower  Follows[] @relation("UserFollower")
+  following Follows[] @relation("UserFollowing")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Follows {
-  followingId String
-  following   User   @relation(name: "UserFollower", fields: [followingId], references: [id])
-
   followerId String
-  follower   User   @relation(name: "UserFollowing", fields: [followerId], references: [id])
+  follower   User   @relation(name: "UserFollower", fields: [followerId], references: [id])
+  
+  followingId String
+  following   User   @relation(name: "UserFollowing", fields: [followingId], references: [id])
+
 
   @@id([followerId, followingId])
 }

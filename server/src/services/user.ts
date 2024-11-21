@@ -92,32 +92,40 @@ export class UserService{
         })
         return user
     }
+   
 
-    public static async followUser(followerId:string,followingId:string){
-        const result = await prismaClient.follows.create({
-            data:{
-                followerId,
-                followingId
-            }
-        })
-        if(result){
-            return true
+    public static async followUser(ctx:GraphqlContext,from:string){
+        if(!ctx || !ctx.user || !ctx.user.id){
+            return false
         }
-        return false
+        try {
+            await prismaClient.follows.create({
+                data:{
+                    follower:{connect:{id:ctx.user.id}},
+                    following:{connect:{id:from}}
+                }
+            })
+            return true
+        } catch (error) {
+            return false            
+        }
     }
 
-    public static async followUserr(followerId:string,followingId:string){
-        const result = await prismaClient.follows.create({
-            data:{
-                follower:{connect:{id:followerId}},
-                following:{connect:{id:followingId}},
-            }
-        })
-        if(result){
-            return true
+    public static async unFollowUser(ctx:GraphqlContext,from:string){
+        if(!ctx || !ctx.user || !ctx.user.id){
+            return false
         }
-        return false
+        try {
+            await prismaClient.follows.delete({where:{
+                followerId_followingId:{
+                    followerId:ctx.user.id,
+                    followingId:from
+                }
+            }})
+            return true
+        } catch (error) {
+            return false
+        }
     }
-
     
 }
