@@ -1,7 +1,7 @@
 "use client"
 
 import { createGraphQLClient } from "@/clients/api"
-import { getCurrentUserDetailsQuery } from "@/graphql/query/user"
+import { getCurrentUserDetailsQuery, getUserDetailsByIdWithoutTweets } from "@/graphql/query/user"
 import { useCookie } from "@/utils/CookieProvider"
 import { useQuery } from "@tanstack/react-query"
 
@@ -26,6 +26,27 @@ export const useCurrentUser = () => {
         isError: query.isError,
         error: query.error,
       };
+}
+
+export const useGetUserDetailsByIdWithoutTweets = (id:string) => {
+    const {cookie} = useCookie()
+    const graphQLClient = createGraphQLClient(cookie)
+    const query = useQuery({
+        queryKey:['user-details-by-id-without-tweets',id],
+        queryFn:async() => {
+            return await graphQLClient.request(getUserDetailsByIdWithoutTweets,{id:id})
+        },
+        refetchOnWindowFocus:false,
+        refetchOnReconnect:false
+    })
+    return {
+        user:query.data?.getUserDetailsByIdWithoutTweets,
+        isFetched:query.isFetched,
+        isLoading:query.isLoading,
+        isError: query.isError,
+        error: query.error,
+    }
+
 }
 
 

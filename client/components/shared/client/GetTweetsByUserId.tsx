@@ -8,7 +8,10 @@ import {
   handleUnFollowUserMutation,
 } from "@/graphql/mutate/user";
 import { useGetAllTweetsByUserId } from "@/hooks/AllTweets";
-import { useCurrentUser } from "@/hooks/user";
+import {
+  useCurrentUser,
+  useGetUserDetailsByIdWithoutTweets,
+} from "@/hooks/user";
 import { useCookie } from "@/utils/CookieProvider";
 import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
@@ -36,34 +39,43 @@ const Profile = () => {
     isError,
   } = useGetAllTweetsByUserId(userId);
 
+  const {
+    user: userDataWithoutTweets,
+    isLoading: userDataWithoutTweetsLoading,
+    isError: userDataWithoutTweetsError,
+    isFetched: userDataWithoutTweetsFetched,
+  } = useGetUserDetailsByIdWithoutTweets(userId);
+
   const { user: currentUser } = useCurrentUser();
 
   const handleFollowUser = useCallback(async () => {
     if (!userId || userId === "") return;
     await graphQLClient.request(handleFollowUserMutation, { to: userId });
-    await queryClient.invalidateQueries({ queryKey: ["current-user"] });
-  }, [graphQLClient, queryClient, userId]);
+    await queryClient.invalidateQueries({ queryKey: ["user-details-by-id-without-tweets",id] });
+  }, [graphQLClient, id, queryClient, userId]);
 
   const handleUnFollowUser = useCallback(async () => {
     if (!userId || userId === "") return;
     await graphQLClient.request(handleUnFollowUserMutation, { to: userId });
-    await queryClient.invalidateQueries({ queryKey: ["current-user"] });
-  }, [graphQLClient, queryClient, userId]);
+    await queryClient.invalidateQueries({ queryKey: ["user-details-by-id-without-tweets",id] });
+  }, [graphQLClient, id, queryClient, userId]);
 
   const isFollowing = useMemo(() => {
-    console.log("following", currentUser?.following, currentUser?.id, userId);
+    // console.log("following", currentUser?.following, currentUser?.id, userId);
+    
+    // console.log("sfasfasdfadf",userDataWithoutTweets?.follower,userId,currentUser?.id);
     if (!userId || userId === "") return false;
     if (
-      currentUser?.following &&
-      currentUser?.following?.length > 0 &&
-      currentUser?.following?.findIndex((el) => el.id === userId) >= 0
+      userDataWithoutTweets?.follower &&
+      userDataWithoutTweets?.follower?.length > 0 &&
+      userDataWithoutTweets?.follower?.findIndex((el) => el.id === currentUser?.id) >= 0
     ) {
       return true;
     }
     return false;
-  }, [currentUser?.following, currentUser?.id, userId]);
+  }, [currentUser?.id, userDataWithoutTweets?.follower, userId]);
 
-  if (isLoading) {
+  if (isLoading || userDataWithoutTweetsLoading) {
     return (
       <>
         <h1>Loading...</h1>
@@ -71,7 +83,7 @@ const Profile = () => {
     );
   }
 
-  if (isError) {
+  if (isError || userDataWithoutTweetsError) {
     return toast.error("Something went wrong while fetching profile data!!!");
   }
 
@@ -80,8 +92,8 @@ const Profile = () => {
   };
 
   return (
-    isFetched &&
-    userData && (
+    isFetched && userDataWithoutTweetsFetched &&
+    userData && userDataWithoutTweets && (
       <>
         <nav className="w-full  flex items-center gap-6 p-3">
           <div
@@ -116,8 +128,8 @@ const Profile = () => {
                   {`${userData.firstName} ${userData.lastName ?? ""}`}
                 </h1>
                 <div className="text-md text-gray-400 flex gap-5 mt-2 font-bold">
-                  <span>{userData?.follower?.length} followers</span>
-                  <span>{userData?.following?.length} following</span>
+                  <span>{userDataWithoutTweets?.follower?.length} followers</span>
+                  <span>{userDataWithoutTweets?.following?.length} following</span>
                 </div>
               </div>
               {currentUser?.id !== userId && (

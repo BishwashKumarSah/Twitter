@@ -92,6 +92,15 @@ export class UserService{
         })
         return user
     }
+
+    public static async getUserDetailsByIdWithoutTweets(id:string){
+        if(!id) throw new Error("Id is required")
+        return await prismaClient.user.findFirst({
+            where:{
+                id:id
+            },            
+        })
+    }
    
 
     public static async followUser(ctx:GraphqlContext,from:string){

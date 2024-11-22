@@ -31,6 +31,8 @@ const GetTweetsByUserId = async ({ userId }: { userId: string }) => {
       }
     },
   });
+
+  
   // console.log(
   //   "prefetchQueryAllTweetsByUserIdQuery server GetTweetsByUserId",
   //   allTweetsByUserIdQuery

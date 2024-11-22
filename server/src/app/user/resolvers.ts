@@ -6,7 +6,9 @@ import { UserService } from '../../services/user';
 const queries = {
     verifyGoogleToken:async(_:any,{token}:{token:string}) => UserService.getJWTToken(token),
 
-    getCurrentUserDetails:async(_:any,args:any,ctx:GraphqlContext) => UserService.getCurrentUserDetails(ctx)
+    getCurrentUserDetails:async(_:any,args:any,ctx:GraphqlContext) => UserService.getCurrentUserDetails(ctx),
+
+    getUserDetailsByIdWithoutTweets:async(_:any,{id}:{id:string},ctx:GraphqlContext) => UserService.getUserDetailsByIdWithoutTweets(id)
 
 }
 
