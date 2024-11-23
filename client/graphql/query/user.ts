@@ -9,9 +9,7 @@ export const verifyUserGoogleLoginToken = graphql(`
 
 export const getUserDetailsByIdWithoutTweets = graphql(`
   #graphql
-  query getUserDetailsByIdWithoutTweets(
-    $id: String!
-  ) {
+  query getUserDetailsByIdWithoutTweets($id: String!) {
     getUserDetailsByIdWithoutTweets(id: $id) {
       id
       firstName
@@ -45,6 +43,13 @@ export const getCurrentUserDetailsQuery = graphql(`
       lastName
       email
       profileImageUrl
+      recommendedUsers {
+        id
+        email
+        firstName
+        lastName
+        profileImageUrl
+      }
       following {
         id
         firstName

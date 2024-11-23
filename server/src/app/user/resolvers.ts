@@ -55,7 +55,40 @@ const extraResolvers = {
             })
             // console.log("element following --> follower",result);
             return result.map((el) => el.following)
-        }
+        },
+
+        recommendedUsers:async(_:any,{}:any,ctx:GraphqlContext) => {
+            // console.log('ctxzzzzzzzzzzzz',ctx.user?.id);
+            if (!ctx || !ctx.user?.id) return []
+            // ! here  i am just getting the ctxUser -> following which is an array of ctxUser following.
+            // kingfromml (is following)-> sahkuar.bishwah if i had more i would get that too lets says kingfromml (isfollowing) bishw2121
+            // here i have two followings for ctxUser(kingfromml - current loggedin user) -->  [sahkuar.bishwah,bishw2121 ]
+            const result = await prismaClient.follows.findMany({
+                where:{
+                    follower:{id:ctx.user.id}
+                },                
+            })
+            // console.log("resultt",result);
+            // return result.map((el) => el.following)
+            const recommendedUsers:User[] = []
+            // !here i am now iterating the followings array of ctx user and getting its following(*) where he is the follower(*) in follows table.
+            for (const follow of result){
+                const ctx_ctxfollowing_followingfollowing = await prismaClient.follows.findMany({
+                    where:{
+                        follower:{id:follow.followingId}
+                    },
+                    include:{
+                        following:true
+                    }
+                })
+                // console.log("ctx_ctxfollowing_followingfollowing",ctx_ctxfollowing_followingfollowing);
+                ctx_ctxfollowing_followingfollowing.forEach((el) => recommendedUsers.push(el.following))
+                // console.log("rec",recommendedUsers);
+            }
+            // console.log("followingUsersA->C",recommendedUsers);
+            // return recommendedUsers.map((el) => el.following)
+            return recommendedUsers
+        }   
     }
 }
 
