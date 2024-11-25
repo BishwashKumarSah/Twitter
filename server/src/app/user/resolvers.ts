@@ -71,6 +71,9 @@ const extraResolvers = {
             // console.log("resultt",result);
             // return result.map((el) => el.following)
             const recommendedUsers:User[] = []
+            const seenUserIDs = new Set()
+            const followingIds = new Set(result.map(r => r.followingId))
+            // console.log("followingIdssssssssssssssssssssssssss",followingIds)
             // !here i am now iterating the followings array of ctx user and getting its following(*) where he is the follower(*) in follows table.
             for (const follow of result){
                 const ctx_ctxfollowing_followingfollowing = await prismaClient.follows.findMany({
@@ -82,7 +85,13 @@ const extraResolvers = {
                     }
                 })
                 // console.log("ctx_ctxfollowing_followingfollowing",ctx_ctxfollowing_followingfollowing);
-                ctx_ctxfollowing_followingfollowing.forEach((el) => recommendedUsers.push(el.following))
+                ctx_ctxfollowing_followingfollowing.forEach((el) => 
+                    {    
+                        if(!seenUserIDs.has(el.following.id) && el.following.id !== ctx.user?.id && !followingIds.has(el.following.id) ) {
+                            seenUserIDs.add(el.following.id)
+                            recommendedUsers.push(el.following)
+                        }                   
+                    })
                 // console.log("rec",recommendedUsers);
             }
             // console.log("followingUsersA->C",recommendedUsers);

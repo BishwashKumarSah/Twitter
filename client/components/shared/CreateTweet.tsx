@@ -85,56 +85,58 @@ const CreateTweet: React.FC = () => {
   }, [content, mutateAsync, imageUrl]);
 
   return (
-    <div className="flex p-4  gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800   cursor-pointer">
-      <div>
-        {user?.profileImageUrl && (
-          <Image
-            className="rounded-full"
-            src={user.profileImageUrl}
-            height={38}
-            width={38}
-            alt="Profile Image"
-          />
-        )}
-      </div>
-      <div className="w-full">
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          name="tweet"
-          id="tweet"
-          className="w-full bg-transparent text-lg focus:outline-0 min-h-[5rem] border-b border-slate-800"
-          rows={4}
-          placeholder="What's happening?"
-        ></textarea>
-        {imageUrl && (
-          <div className="flex gap-5">
-            {imageUrl.map(
-              (img) =>
-                img && (
-                  <Image
-                    key={img}
-                    src={img}
-                    alt="tweetImages"
-                    width={300}
-                    height={300}
-                  />
-                )
-            )}
+    <>
+      <div className="flex p-4  gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800   cursor-pointer">
+        <div>
+          {user?.profileImageUrl && (
+            <Image
+              className="rounded-full"
+              src={user.profileImageUrl}
+              height={38}
+              width={38}
+              alt="Profile Image"
+            />
+          )}
+        </div>
+        <div className="w-full">
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            name="tweet"
+            id="tweet"
+            className="w-full bg-transparent text-lg focus:outline-0 min-h-[5rem] border-b border-slate-800"
+            rows={4}
+            placeholder="What's happening?"
+          ></textarea>
+          {imageUrl && (
+            <div className="flex gap-5">
+              {imageUrl.map(
+                (img) =>
+                  img && (
+                    <Image
+                      key={img}
+                      src={img}
+                      alt="tweetImages"
+                      width={300}
+                      height={300}
+                    />
+                  )
+              )}
+            </div>
+          )}
+          <div className="mt-3 flex items-center justify-between">
+            <FaRegImage onClick={handleSelectImages} />
+            <button
+              className="bg-[#1d9bf0] rounded-full py-2 px-5 font-semibold text-[16px] disabled:bg-[#0F4E78] disabled:text-[#808080]"
+              disabled={user === undefined || user === null || content === ""}
+              onClick={handleCreateTweet}
+            >
+              Post
+            </button>
           </div>
-        )}
-        <div className="mt-3 flex items-center justify-between">
-          <FaRegImage onClick={handleSelectImages} />
-          <button
-            className="bg-[#1d9bf0] rounded-full py-2 px-5 font-semibold text-[16px] disabled:bg-[#0F4E78] disabled:text-[#808080]"
-            disabled={user === undefined || user === null || content === ""}
-            onClick={handleCreateTweet}
-          >
-            Post
-          </button>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

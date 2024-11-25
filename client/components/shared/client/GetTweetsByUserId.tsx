@@ -52,12 +52,14 @@ const Profile = () => {
     if (!userId || userId === "") return;
     await graphQLClient.request(handleFollowUserMutation, { to: userId });
     await queryClient.invalidateQueries({ queryKey: ["user-details-by-id-without-tweets",id] });
+    await queryClient.invalidateQueries({ queryKey: ["current-user"] });
   }, [graphQLClient, id, queryClient, userId]);
 
   const handleUnFollowUser = useCallback(async () => {
     if (!userId || userId === "") return;
     await graphQLClient.request(handleUnFollowUserMutation, { to: userId });
     await queryClient.invalidateQueries({ queryKey: ["user-details-by-id-without-tweets",id] });
+    await queryClient.invalidateQueries({ queryKey: ["current-user"] });
   }, [graphQLClient, id, queryClient, userId]);
 
   const isFollowing = useMemo(() => {
