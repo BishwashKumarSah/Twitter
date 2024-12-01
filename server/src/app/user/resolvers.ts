@@ -2,6 +2,7 @@ import { prismaClient } from "../../clients/db";
 import { GraphqlContext } from "../interface";
 import { User } from "@prisma/client";
 import { UserService } from "../../services/user";
+import { redisClient } from "../../clients/redis";
 
 const queries = {
   verifyGoogleToken: async (_: any, { token }: { token: string }) =>
@@ -18,10 +19,22 @@ const queries = {
 };
 
 const mutations = {
-  followUser: async (_: any, { to }: { to: string }, ctx: GraphqlContext) =>
-    UserService.followUser(ctx, to),
-  unFollowUser: async (_: any, { to }: { to: string }, ctx: GraphqlContext) =>
-    UserService.unFollowUser(ctx, to),
+  followUser: async (_: any, { to }: { to: string }, ctx: GraphqlContext) =>{
+    if(!ctx || !ctx.user || !ctx.user.id){
+      return false
+    }
+    const val = await UserService.followUser(ctx.user.id, to)
+    await redisClient?.del(`RECOMMENDED_USER:${ctx.user.id}`)
+    return val
+  },
+  unFollowUser: async (_: any, { to }: { to: string }, ctx: GraphqlContext) =>{
+    if(!ctx || !ctx.user || !ctx.user.id){
+      return false
+   }
+    await UserService.unFollowUser(ctx.user.id, to)
+    await redisClient?.del(`RECOMMENDED_USER:${ctx.user.id}`)
+    return true
+  }
 };
 
 const extraResolvers = {
@@ -140,6 +153,11 @@ const extraResolvers = {
     // }
     recommendedUsers: async (_: any, {}: any, ctx: GraphqlContext) => {
       if (!ctx || !ctx.user?.id) return [];
+      const cachedRecommendedUsers = await redisClient?.get(`RECOMMENDED_USER:${ctx.user.id}`)
+
+      if(cachedRecommendedUsers) {        
+        return JSON.parse(cachedRecommendedUsers)
+      }
 
       const result = await prismaClient.follows.findMany({
         // here this where will give followerId: 'cm2mxvwsr0000jq6hrfklwl3d',
@@ -204,7 +222,9 @@ const extraResolvers = {
         }
       }
     //   console.log(myFollowings_Followings);
-      return myFollowings_Followings;
+    await redisClient?.set(`RECOMMENDED_USER:${ctx.user.id}`,JSON.stringify(myFollowings_Followings))
+    // console.log("usersssss",myFollowings_Followings);
+    return myFollowings_Followings;
     },
   },
 };

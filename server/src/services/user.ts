@@ -103,14 +103,12 @@ export class UserService{
     }
    
 
-    public static async followUser(ctx:GraphqlContext,from:string){
-        if(!ctx || !ctx.user || !ctx.user.id){
-            return false
-        }
+    public static async followUser(ctx:string,from:string){
+        
         try {
             await prismaClient.follows.create({
                 data:{
-                    follower:{connect:{id:ctx.user.id}},
+                    follower:{connect:{id:ctx}},
                     following:{connect:{id:from}}
                 }
             })
@@ -120,14 +118,12 @@ export class UserService{
         }
     }
 
-    public static async unFollowUser(ctx:GraphqlContext,from:string){
-        if(!ctx || !ctx.user || !ctx.user.id){
-            return false
-        }
+    public static async unFollowUser(ctx:string,from:string){        
         try {
+            // console.log("iddd",ctx);
             await prismaClient.follows.delete({where:{
                 followerId_followingId:{
-                    followerId:ctx.user.id,
+                    followerId:ctx,
                     followingId:from
                 }
             }})

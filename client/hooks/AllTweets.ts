@@ -20,7 +20,7 @@ export const useCreateNewTweet = () => {
         // console.log("oldData",oldData);
         const oldTweets = oldData?.getAllTweets || []
         const newTweet = newTweetData.createTweet;
-        return {getAllTweets:[...oldTweets,newTweet]}
+        return {getAllTweets:[newTweet,...oldTweets]}
       })
     } 
   })
