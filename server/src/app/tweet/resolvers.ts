@@ -24,16 +24,20 @@ const queries = {
   getAllUser: async () => UserService.getAllUsers(),
 
   getAllUserTweets: async (_: any, { userId }: { userId: string }) => {
-    // const cachedAllUserTweetsById = await redisClient?.get(
-    //   `allUserTweetsById:${userId}`
-    // );
-    // if (cachedAllUserTweetsById) return cachedAllUserTweetsById;
+    if (!userId || userId === "favicon.ico") {
+      throw new Error("Please provide a valid userId to getAllUserTweets");
+    }
+
+    const cachedAllUserTweetsById = await redisClient?.get(
+      `allUserTweetsByIddd:${userId}`
+    );
+    if (cachedAllUserTweetsById) return JSON.parse(cachedAllUserTweetsById);
     const getAllUserTweetsById = await UserService.getAllUserTweets(userId);
-    console.log("getAllUserTweetsById",getAllUserTweetsById);
-    // await redisClient?.set(
-    //   `allUserTweetsById:${userId}`,
-    //   JSON.stringify(getAllUserTweetsById)
-    // );
+    // console.log("getAllUserTweetsById",getAllUserTweetsById?.tweets);
+    await redisClient?.set(
+      `allUserTweetsByIddd:${userId}`,
+      JSON.stringify(getAllUserTweetsById)
+    );
     return getAllUserTweetsById;
   },
 
@@ -51,7 +55,7 @@ const mutations = {
     ctx: GraphqlContext
   ) => {
     const newTweet = TweetService.createTweet(payload, ctx);
-    await redisClient?.del("ALL_TWEETS");
+    // await redisClient?.del("ALL_TWEETS");
     return newTweet;
   },
 };

@@ -24,6 +24,7 @@ export const useCreateNewTweet = () => {
       })
     } 
   })
+  // console.log("mutationaaaaaaaaaaaaaaaaaaa",mutation);
   return mutation
 }
 

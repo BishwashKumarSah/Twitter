@@ -77,11 +77,19 @@ const CreateTweet: React.FC = () => {
     mutateAsync({
       content,
       imageUrl,
-    }).then(() => {
-      setContent("");
-      setImageUrl([]);
-      toast.success("Posted Successfully!", { id: "tweet_post" });
-    });
+    })
+      .then(() => {
+        setContent("");
+        setImageUrl([]);
+        toast.success("Posted Successfully!", { id: "tweet_post" });
+      })
+      .catch((error) => {
+        const errorMessage =
+          error?.response?.errors[0]?.message ||
+          "Please Wait For 10 seconds!!!";
+        // console.log("errorssssss",error?.response?.errors[0]?.message);
+        toast.error(errorMessage, { id: "tweet_post" });
+      });
   }, [content, mutateAsync, imageUrl]);
 
   return (
