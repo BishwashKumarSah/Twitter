@@ -6,6 +6,7 @@ import { FiHeart } from "react-icons/fi";
 import { LuUpload } from "react-icons/lu";
 import { Tweet } from "@/gql/graphql";
 import Link from "next/link";
+import { GoHeartFill } from "react-icons/go";
 
 interface FeedCardProps {
   data: Tweet;
@@ -13,7 +14,7 @@ interface FeedCardProps {
 
 const FeedCard: React.FC<FeedCardProps> = (props) => {
   const data = props.data;
-  // console.log("data",data.author);
+  console.log({ data });
   return (
     data && (
       <div className="flex  p-4  gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800  hover:bg-gray-950 cursor-pointer">
@@ -40,17 +41,17 @@ const FeedCard: React.FC<FeedCardProps> = (props) => {
               (img) =>
                 img && (
                   <div key={img} className="w-full">
-                    <Image                      
+                    <Image
                       src={img}
                       alt="tweet-images"
                       height={0}
                       layout="responsive"
                       width={100}
-                      style={{ 
-                        height:"auto",
-                        maxHeight:"400px",
-                        // objectFit: "contain" 
-                       }}
+                      style={{
+                        height: "auto",
+                        maxHeight: "400px",
+                        // objectFit: "contain"
+                      }}
                     />
                   </div>
                 )
@@ -62,8 +63,9 @@ const FeedCard: React.FC<FeedCardProps> = (props) => {
             <div>
               <AiOutlineRetweet />
             </div>
-            <div>
-              <FiHeart />
+            <div className="flex flex-row justify-center items-center gap-2">
+              {data.isLikedByUser ? <GoHeartFill /> : <FiHeart />}
+              <span className="text-sm">{data.likesCount}</span>
             </div>
             <div>
               <LuUpload />

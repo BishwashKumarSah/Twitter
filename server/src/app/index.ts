@@ -28,8 +28,7 @@ export async function initServer(){
                 ${User.mutations}
             }
         `,
-        resolvers:{
-            
+        resolvers:{            
             Query:{
                 ...User.resolvers.queries,
                 ...Tweet.resolvers.queries

@@ -22,6 +22,9 @@ model Tweet {
   author   User   @relation(fields: [authorId], references: [email])
   authorId String
 
+  likes      Likes[]
+  likesCount Int     @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -39,15 +42,25 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  likes     Likes[]
 }
 
 model Follows {
   followerId String
   follower   User   @relation(name: "UserFollower", fields: [followerId], references: [id])
-  
+
   followingId String
   following   User   @relation(name: "UserFollowing", fields: [followingId], references: [id])
 
-
   @@id([followerId, followingId])
+}
+
+model Likes {
+  tweetId   String
+  tweet     Tweet    @relation(fields: [tweetId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@id([tweetId, userId])
 }

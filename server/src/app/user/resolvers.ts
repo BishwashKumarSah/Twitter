@@ -19,22 +19,25 @@ const queries = {
 };
 
 const mutations = {
-  followUser: async (_: any, { to }: { to: string }, ctx: GraphqlContext) =>{
-    if(!ctx || !ctx.user || !ctx.user.id){
-      return false
+
+  followUser: async (_: any, { to }: { to: string }, ctx: GraphqlContext) => {
+    if (!ctx || !ctx.user || !ctx.user.id) {
+      return false;
     }
-    const val = await UserService.followUser(ctx.user.id, to)
-    await redisClient?.del(`RECOMMENDED_USER:${ctx.user.id}`)
-    return val
+    const val = await UserService.followUser(ctx.user.id, to);
+    await redisClient?.del(`RECOMMENDED_USER:${ctx.user.id}`);
+    return val;
   },
-  unFollowUser: async (_: any, { to }: { to: string }, ctx: GraphqlContext) =>{
-    if(!ctx || !ctx.user || !ctx.user.id){
-      return false
-   }
-    await UserService.unFollowUser(ctx.user.id, to)
-    await redisClient?.del(`RECOMMENDED_USER:${ctx.user.id}`)
-    return true
-  }
+
+  unFollowUser: async (_: any, { to }: { to: string }, ctx: GraphqlContext) => {
+    if (!ctx || !ctx.user || !ctx.user.id) {
+      return false;
+    }
+    await UserService.unFollowUser(ctx.user.id, to);
+    await redisClient?.del(`RECOMMENDED_USER:${ctx.user.id}`);
+    return true;
+  },
+
 };
 
 const extraResolvers = {
@@ -153,10 +156,12 @@ const extraResolvers = {
     // }
     recommendedUsers: async (_: any, {}: any, ctx: GraphqlContext) => {
       if (!ctx || !ctx.user?.id) return [];
-      const cachedRecommendedUsers = await redisClient?.get(`RECOMMENDED_USER:${ctx.user.id}`)
+      const cachedRecommendedUsers = await redisClient?.get(
+        `RECOMMENDED_USER:${ctx.user.id}`
+      );
 
-      if(cachedRecommendedUsers) {        
-        return JSON.parse(cachedRecommendedUsers)
+      if (cachedRecommendedUsers) {
+        return JSON.parse(cachedRecommendedUsers);
       }
 
       const result = await prismaClient.follows.findMany({
@@ -183,16 +188,18 @@ const extraResolvers = {
           follower: { id: ctx.user.id },
         },
         include: {
-          following: {     // (till 1)
-            include: { // now since i have all the fields included then using the id of that user i will check the follows table to fetch related data
-                // since user have relation with follows table but take care here cuz since i am trying to the the following of ctx's following here
-                // followerId String
-                // follower  Follows[] @relation("UserFollower")
-//   follower   User   @relation(name: "UserFollower", fields: [followerId], references: [id]) i am doing follower in the next line 
-// since kingfrom(ctx) follows (sahkumar) follows (2121) now i have the sahkumar id(userId cuz of include in above) so
-// i will check that userId in the followerId and get all its following 
-// now here it will also give me something like    followerId: '.....',     
-        //       followingId: '....',    and again i need to include all the information so i will use the following:true at third include that will give all the user details.
+          following: {
+            // (till 1)
+            include: {
+              // now since i have all the fields included then using the id of that user i will check the follows table to fetch related data
+              // since user have relation with follows table but take care here cuz since i am trying to the the following of ctx's following here
+              // followerId String
+              // follower  Follows[] @relation("UserFollower")
+              //   follower   User   @relation(name: "UserFollower", fields: [followerId], references: [id]) i am doing follower in the next line
+              // since kingfrom(ctx) follows (sahkumar) follows (2121) now i have the sahkumar id(userId cuz of include in above) so
+              // i will check that userId in the followerId and get all its following
+              // now here it will also give me something like    followerId: '.....',
+              //       followingId: '....',    and again i need to include all the information so i will use the following:true at third include that will give all the user details.
               follower: {
                 include: {
                   following: true,
@@ -202,29 +209,36 @@ const extraResolvers = {
           },
         },
       });
-    //   try to check the model first here include will give all the related field info if it has followerId/followingId
-    // which will map to user table and get the record but if there is not then the after we got all user field incldue
-    // will map to follows table to get the related records.
-    //   console.log("RESULTTTT", result);
-    //   console.log("RESULTTTTfollowing", result[0].following.follower);
-      const myFollowings_Followings = []
-      const isAlreadyInSet = new Set()
-      const followingIDs = new Set(result.map(r => r.followingId))
-      for (const myfollowings of result){
-        if (myFollowings_Followings.length >= 5){
-            return myFollowings_Followings
+      //   try to check the model first here include will give all the related field info if it has followerId/followingId
+      // which will map to user table and get the record but if there is not then the after we got all user field incldue
+      // will map to follows table to get the related records.
+      //   console.log("RESULTTTT", result);
+      //   console.log("RESULTTTTfollowing", result[0].following.follower);
+      const myFollowings_Followings = [];
+      const isAlreadyInSet = new Set();
+      const followingIDs = new Set(result.map((r) => r.followingId));
+      for (const myfollowings of result) {
+        if (myFollowings_Followings.length >= 5) {
+          return myFollowings_Followings;
         }
-        for (const followedUsersFollowings of myfollowings.following.follower){
-            if (!isAlreadyInSet.has(followedUsersFollowings.following.id) && followedUsersFollowings.following.id !== ctx.user.id && !followingIDs.has(followedUsersFollowings.following.id)){
-                isAlreadyInSet.add(followedUsersFollowings.following.id)
-                myFollowings_Followings.push(followedUsersFollowings.following)
-            } 
+        for (const followedUsersFollowings of myfollowings.following.follower) {
+          if (
+            !isAlreadyInSet.has(followedUsersFollowings.following.id) &&
+            followedUsersFollowings.following.id !== ctx.user.id &&
+            !followingIDs.has(followedUsersFollowings.following.id)
+          ) {
+            isAlreadyInSet.add(followedUsersFollowings.following.id);
+            myFollowings_Followings.push(followedUsersFollowings.following);
+          }
         }
       }
-    //   console.log(myFollowings_Followings);
-    await redisClient?.set(`RECOMMENDED_USER:${ctx.user.id}`,JSON.stringify(myFollowings_Followings))
-    // console.log("usersssss",myFollowings_Followings);
-    return myFollowings_Followings;
+      //   console.log(myFollowings_Followings);
+      await redisClient?.set(
+        `RECOMMENDED_USER:${ctx.user.id}`,
+        JSON.stringify(myFollowings_Followings)
+      );
+      // console.log("usersssss",myFollowings_Followings);
+      return myFollowings_Followings;
     },
   },
 };

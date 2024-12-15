@@ -10,6 +10,10 @@ export interface CreateTweetData {
   imageUrl?: string[];
 }
 
+export interface LikeUnlikeTweetData {
+  tweetId: string;
+}
+
 const queries = {
   getAllTweets: async () => {
     const cachedAllTweets = await redisClient?.get("ALL_TWEETS");
@@ -17,7 +21,7 @@ const queries = {
       return JSON.parse(cachedAllTweets);
     }
     const allTweets = await TweetService.getAllTweets();
-    await redisClient?.set("ALL_TWEETS", JSON.stringify(allTweets));
+    await redisClient?.setex("ALL_TWEETS",2000, JSON.stringify(allTweets));
     return allTweets;
   },
 
@@ -58,6 +62,81 @@ const mutations = {
     // await redisClient?.del("ALL_TWEETS");
     return newTweet;
   },
+
+  likeTweet: async (
+    _: any,
+    { payload }: { payload: LikeUnlikeTweetData },
+    ctx: GraphqlContext
+  ) => {
+    if (!ctx || !ctx.user?.id)
+      throw new Error("Please Login To Perform This Action!");
+    
+    // 1. Check if the user has already liked the tweet
+    const hasAlreadyLiked = await prismaClient.likes.findUnique({
+      where: {
+        tweetId_userId: {
+          tweetId: payload.tweetId,
+          userId: ctx.user.id,
+        },
+      },
+    });
+  
+    // 2. If the user has already liked, remove the like
+    if (hasAlreadyLiked) {
+      // Remove the like from the Likes table
+      await prismaClient.likes.delete({
+        where: {
+          tweetId_userId: {
+            tweetId: payload.tweetId,
+            userId: ctx.user.id,
+          },
+        },
+      });
+  
+      // Decrement the like count in Redis
+      await redisClient?.decrby(`tweet:${payload.tweetId}:likesCount`, 111);
+  
+      // Decrement the like count in the database
+      await prismaClient.tweet.update({
+        where: {
+          id: payload.tweetId,
+        },
+        data: {
+          likesCount: {
+            decrement: 1,
+          },
+        },
+      });
+  
+      return false;  // Tweet unliked
+    } else {
+      // Add the like to the Likes table
+      await prismaClient.likes.create({
+        data: {
+          tweetId: payload.tweetId,
+          userId: ctx.user.id,
+        },
+      });
+  
+      // Increment the like count in Redis
+      await redisClient?.incrby(`tweet:${payload.tweetId}:likesCount`, 1);
+  
+      // Increment the like count in the database
+      await prismaClient.tweet.update({
+        where: {
+          id: payload.tweetId,
+        },
+        data: {
+          likesCount: {
+            increment: 1,
+          },
+        },
+      });
+  
+      return true;  // Tweet liked
+    }
+  }
+  
 };
 
 const extraResolvers = {
@@ -66,6 +145,32 @@ const extraResolvers = {
       return await prismaClient.user.findUnique({
         where: { email: parent.authorId },
       });
+    },
+
+    likesCount: async (parent: Tweet) => {
+      try {
+        console.log("parent",parent);
+        const val = parent.likesCount; // Return the likesCount stored in the Tweet model
+        console.log("val", val);
+        return val
+      } catch (error) {
+        console.error("Error fetching like count:", error);
+        throw new Error("Unable to fetch like count");
+      }
+    },
+
+    isLikedByUser: async (parent: Tweet, args: any, ctx: GraphqlContext) => {
+      if (!ctx || !ctx.user?.id) return false;
+      const res = await prismaClient.likes.findUnique({
+        where: {
+          tweetId_userId: {
+            tweetId: parent.id,
+            userId: ctx.user?.id,
+          },
+        },
+      });
+      return (res !== null); 
+      
     },
   },
 };

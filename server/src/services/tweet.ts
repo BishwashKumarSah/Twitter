@@ -6,9 +6,11 @@ import { CreateTweetData } from "../app/tweet/resolvers";
 import { redisClient } from "../clients/redis";
 export class TweetService {
   public static async getAllTweets() {
-    return await prismaClient.tweet.findMany({
+    const tweets =  await prismaClient.tweet.findMany({
       orderBy: { createdAt: "desc" },
     });
+    console.log("Tweetssssssssss",tweets);
+    return tweets
   }
 
   public static async createTweet(
