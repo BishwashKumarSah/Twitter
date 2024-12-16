@@ -25,6 +25,8 @@ model Tweet {
   likes      Likes[]
   likesCount Int     @default(0)
 
+  bookMark BookMark[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -40,9 +42,10 @@ model User {
   follower  Follows[] @relation("UserFollower")
   following Follows[] @relation("UserFollowing")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   likes     Likes[]
+  BookMark  BookMark[]
 }
 
 model Follows {
@@ -63,4 +66,14 @@ model Likes {
   createdAt DateTime @default(now())
 
   @@id([tweetId, userId])
+}
+
+model BookMark {
+  tweetId String
+  tweet   Tweet  @relation(fields: [tweetId], references: [id])
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+
+  @@id([tweetId, userId])
+  @@unique([tweetId, userId])
 }

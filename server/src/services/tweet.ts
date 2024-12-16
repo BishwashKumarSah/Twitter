@@ -9,7 +9,7 @@ export class TweetService {
     const tweets =  await prismaClient.tweet.findMany({
       orderBy: { createdAt: "desc" },
     });
-    console.log("Tweetssssssssss",tweets);
+    // console.log("Tweetssssssssss",tweets);
     return tweets
   }
 

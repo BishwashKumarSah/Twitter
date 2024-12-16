@@ -21,7 +21,7 @@ const queries = {
       return JSON.parse(cachedAllTweets);
     }
     const allTweets = await TweetService.getAllTweets();
-    await redisClient?.setex("ALL_TWEETS",2000, JSON.stringify(allTweets));
+    await redisClient?.setex("ALL_TWEETS", 2000, JSON.stringify(allTweets));
     return allTweets;
   },
 
@@ -70,7 +70,12 @@ const mutations = {
   ) => {
     if (!ctx || !ctx.user?.id)
       throw new Error("Please Login To Perform This Action!");
-    
+    const RATE_LIMIT_LIKES = await redisClient?.get(
+      `RATE_LIMIT:LIKE:${ctx.user.id}`
+    );
+    if (RATE_LIMIT_LIKES) {
+      throw new Error("Please wait for 10 seconds to post again!");
+    }
     // 1. Check if the user has already liked the tweet
     const hasAlreadyLiked = await prismaClient.likes.findUnique({
       where: {
@@ -80,7 +85,7 @@ const mutations = {
         },
       },
     });
-  
+
     // 2. If the user has already liked, remove the like
     if (hasAlreadyLiked) {
       // Remove the like from the Likes table
@@ -92,10 +97,7 @@ const mutations = {
           },
         },
       });
-  
-      // Decrement the like count in Redis
-      await redisClient?.decrby(`tweet:${payload.tweetId}:likesCount`, 111);
-  
+
       // Decrement the like count in the database
       await prismaClient.tweet.update({
         where: {
@@ -107,8 +109,13 @@ const mutations = {
           },
         },
       });
-  
-      return false;  // Tweet unliked
+      await redisClient?.del("ALL_TWEETS");
+      await redisClient?.setex(
+        `RATE_LIMIT:LIKE:${ctx.user.id}`,
+        10,
+        ctx.user.id
+      );
+      return false; // Tweet unliked
     } else {
       // Add the like to the Likes table
       await prismaClient.likes.create({
@@ -117,10 +124,7 @@ const mutations = {
           userId: ctx.user.id,
         },
       });
-  
-      // Increment the like count in Redis
-      await redisClient?.incrby(`tweet:${payload.tweetId}:likesCount`, 1);
-  
+
       // Increment the like count in the database
       await prismaClient.tweet.update({
         where: {
@@ -132,11 +136,15 @@ const mutations = {
           },
         },
       });
-  
-      return true;  // Tweet liked
+      await redisClient?.setex(
+        `RATE_LIMIT:LIKE:${ctx.user.id}`,
+        10,
+        ctx.user.id
+      );
+      await redisClient?.del("ALL_TWEETS");
+      return true; // Tweet liked
     }
-  }
-  
+  },
 };
 
 const extraResolvers = {
@@ -149,10 +157,8 @@ const extraResolvers = {
 
     likesCount: async (parent: Tweet) => {
       try {
-        console.log("parent",parent);
         const val = parent.likesCount; // Return the likesCount stored in the Tweet model
-        console.log("val", val);
-        return val
+        return val;
       } catch (error) {
         console.error("Error fetching like count:", error);
         throw new Error("Unable to fetch like count");
@@ -169,8 +175,7 @@ const extraResolvers = {
           },
         },
       });
-      return (res !== null); 
-      
+      return res !== null;
     },
   },
 };
