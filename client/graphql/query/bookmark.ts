@@ -1,8 +1,7 @@
 import { graphql } from "@/gql";
 
 export const getAllBookMarkedTweets = graphql(`
-  #graphql
-  query Query {
+  query GetAllUserBookMarks {
     getAllUserBookMarks {
       tweetId
       tweet {
@@ -10,9 +9,11 @@ export const getAllBookMarkedTweets = graphql(`
         content
         imageUrl
         author {
+          id
           firstName
           lastName
           email
+          profileImageUrl
         }
         likesCount
         isLikedByUser
@@ -23,7 +24,6 @@ export const getAllBookMarkedTweets = graphql(`
         firstName
         lastName
         email
-        profileImageUrl
       }
     }
   }

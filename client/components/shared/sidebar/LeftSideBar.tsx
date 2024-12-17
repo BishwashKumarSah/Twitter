@@ -25,7 +25,11 @@ const LeftSideBar = () => {
     { title: "Explore", icon: <HiMagnifyingGlass />, href: "/explore" },
     { title: "Notifications", icon: <SlBell />, href: "/notification" },
     { title: "Messages", icon: <FaRegEnvelope />, href: "/messages" },
-    { title: "Bookmarks", icon: <FaRegBookmark />, href: "/bookmarks" },
+    {
+      title: "Bookmarks",
+      icon: <FaRegBookmark />,
+      href: `/bookmarks/${user ? user.id : ""}`,
+    },
     {
       title: "Profile",
       icon: <FaRegUser />,
