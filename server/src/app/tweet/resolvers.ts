@@ -27,19 +27,26 @@ const queries = {
 
   getAllUser: async () => UserService.getAllUsers(),
 
-  getAllUserTweets: async (_: any, { userId }: { userId: string }) => {
+  getAllUserTweets: async (
+    _: any,
+    { userId }: { userId: string },
+    ctx: GraphqlContext
+  ) => {
     if (!userId || userId === "favicon.ico") {
+      throw new Error("Please provide a valid userId to getAllUserTweets");
+    }
+    if (!ctx || !ctx.user?.id) {
       throw new Error("Please provide a valid userId to getAllUserTweets");
     }
 
     const cachedAllUserTweetsById = await redisClient?.get(
-      `allUserTweetsByIddd:${userId}`
+      `allUserTweetsByIddd:${ctx.user.id}`
     );
     if (cachedAllUserTweetsById) return JSON.parse(cachedAllUserTweetsById);
     const getAllUserTweetsById = await UserService.getAllUserTweets(userId);
     // console.log("getAllUserTweetsById",getAllUserTweetsById?.tweets);
     await redisClient?.set(
-      `allUserTweetsByIddd:${userId}`,
+      `allUserTweetsByIddd:${ctx.user.id}`,
       JSON.stringify(getAllUserTweetsById)
     );
     return getAllUserTweetsById;
@@ -110,6 +117,7 @@ const mutations = {
         },
       });
       await redisClient?.del("ALL_TWEETS");
+      await redisClient?.del(`All_BookMarked_Tweets/${ctx.user.id}`);
       await redisClient?.setex(
         `RATE_LIMIT:LIKE:${ctx.user.id}`,
         10,
@@ -142,6 +150,7 @@ const mutations = {
         ctx.user.id
       );
       await redisClient?.del("ALL_TWEETS");
+      await redisClient?.del(`All_BookMarked_Tweets/${ctx.user.id}`);
       return true; // Tweet liked
     }
   },
@@ -176,6 +185,21 @@ const extraResolvers = {
         },
       });
       return res !== null;
+    },
+
+    isSavedByUser: async (parent: Tweet, args: any, ctx: GraphqlContext) => {
+      if (!ctx || !ctx.user?.id) {
+        throw new Error("Please Login To See The Saved Post!");
+      }
+      const hasSaved = await prismaClient.bookMark.findUnique({
+        where: {
+          tweetId_userId: {
+            tweetId: parent.id,
+            userId: ctx.user.id,
+          },
+        },
+      });
+      return hasSaved !== null;
     },
   },
 };

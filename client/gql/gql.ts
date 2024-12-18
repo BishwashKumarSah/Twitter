@@ -14,7 +14,7 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 const documents = {
-    "\n  #graphql\n  mutation BookmarkTweet($bookMarkTweetPayload: BookMarkData) {\n    BookmarkTweet(BookMarkTweetPayload: $bookMarkTweetPayload)\n  }\n": types.BookmarkTweetDocument,
+    "\n  #graphql\n  mutation BookmarkTweet($payload: BookMarkData) {\n    BookmarkTweet(payload: $payload) {\n      tweetId\n      tweet {\n        id\n        content\n        imageUrl\n        likesCount\n        isLikedByUser\n        author {\n          id\n          email\n          firstName\n          lastName\n          profileImageUrl\n        }\n      }\n      user {\n        id\n        email\n      }\n      userId\n    }\n  }\n": types.BookmarkTweetDocument,
     "\n  #graphql\n  mutation Mutation($payload: CreateTweetData!) {\n    createTweet(payload: $payload) {\n      id\n      content\n      imageUrl\n      author {\n        firstName\n        lastName\n        profileImageUrl\n        email\n      }\n    }\n  }\n": types.MutationDocument,
     "\n  #graphql\n  mutation LikeTweet($payload: LikeUnlikeTweetData!) {\n    likeTweet(payload: $payload)\n  }\n": types.LikeTweetDocument,
     "\n  #graphql\n  mutation FollowUser($to: String!) {\n    followUser(to: $to)\n  }\n": types.FollowUserDocument,
@@ -45,7 +45,7 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  #graphql\n  mutation BookmarkTweet($bookMarkTweetPayload: BookMarkData) {\n    BookmarkTweet(BookMarkTweetPayload: $bookMarkTweetPayload)\n  }\n"): (typeof documents)["\n  #graphql\n  mutation BookmarkTweet($bookMarkTweetPayload: BookMarkData) {\n    BookmarkTweet(BookMarkTweetPayload: $bookMarkTweetPayload)\n  }\n"];
+export function graphql(source: "\n  #graphql\n  mutation BookmarkTweet($payload: BookMarkData) {\n    BookmarkTweet(payload: $payload) {\n      tweetId\n      tweet {\n        id\n        content\n        imageUrl\n        likesCount\n        isLikedByUser\n        author {\n          id\n          email\n          firstName\n          lastName\n          profileImageUrl\n        }\n      }\n      user {\n        id\n        email\n      }\n      userId\n    }\n  }\n"): (typeof documents)["\n  #graphql\n  mutation BookmarkTweet($payload: BookMarkData) {\n    BookmarkTweet(payload: $payload) {\n      tweetId\n      tweet {\n        id\n        content\n        imageUrl\n        likesCount\n        isLikedByUser\n        author {\n          id\n          email\n          firstName\n          lastName\n          profileImageUrl\n        }\n      }\n      user {\n        id\n        email\n      }\n      userId\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

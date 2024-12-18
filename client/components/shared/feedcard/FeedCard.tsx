@@ -10,13 +10,34 @@ import Link from "next/link";
 import { useLikeTweets } from "@/hooks/AllTweets";
 import toast from "react-hot-toast";
 import { ClientError } from "graphql-request";
+import { useCurrentUser } from "@/hooks/user";
+import { useCreateBookMarkedTweets } from "@/hooks/BookMartTweets";
+
 
 interface FeedCardProps {
   data: Tweet;
 }
 
 const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
-  const { mutateAsync } = useLikeTweets();
+  const { user } = useCurrentUser();
+  const { mutateAsync } = useLikeTweets({ userId: user ? user?.id : "" });
+  const { mutateAsync: BookMarkTweet } = useCreateBookMarkedTweets();
+
+  const handleBookmarkTweet = async (tweetId: string) => {
+    try {
+      // toast.loading("Saving...", { id: `BookMark:${tweetId}` });
+      await BookMarkTweet({ tweetId }).then(() => {
+        toast.success("Post Saved Successfully!", {
+          id: `BookMark:${tweetId}`,
+        });
+      });
+    } catch (error) {
+      if (error instanceof ClientError) {
+        toast.error(error.message);
+      }
+      console.log("Error while Bookmarking!", error);
+    }
+  };
 
   const handleLike = async (tweetId: string) => {
     try {
@@ -27,7 +48,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
     } catch (error) {
       // Show error toast
       if (error instanceof ClientError) {
-        console.log("ERRORLIEKS", error.response.errors?.[0]?.message);
+        // console.log("ERRORLIEKS", error.response.errors?.[0]?.message);
         toast.error(
           error.response.errors?.[0]?.message || "Something went wrong!"
         );
@@ -79,7 +100,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
           <div>
             <BiMessageRounded />
           </div>
-          <div>
+          <div onClick={() => handleBookmarkTweet(data.id)}>
             <AiOutlineRetweet />
           </div>
           <div className="flex flex-row justify-center items-center gap-2">

@@ -34,17 +34,25 @@ export const useCreateNewTweet = () => {
   return mutation;
 };
 
-export const useLikeTweets = () => {
+export const useLikeTweets = ({ userId }: { userId: string }) => {
   const queryClient = useQueryClient();
   const { cookie } = useCookie();
   const graphQLClient = createGraphQLClient(cookie);
+  const queryKeysToInvalidate = [
+    ["get-all-tweets"],
+    ["All_BookMarked_Tweets", userId],
+  ];
   const likeTweetMutation = useMutation({
     mutationFn: async (payload: LikeUnlikeTweetData) =>
       await graphQLClient.request(likeTweets, { payload }),
-    onSuccess: async() =>
-      await queryClient.invalidateQueries({
-        queryKey: ["get-all-tweets"],
-      }),
+    onSuccess: async () =>
+      await Promise.all(
+        queryKeysToInvalidate.map(async (key) => {
+          await queryClient.invalidateQueries({
+            queryKey: key,
+          });
+        })
+      ),
   });
   return likeTweetMutation;
 };

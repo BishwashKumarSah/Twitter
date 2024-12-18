@@ -1,3 +1,3 @@
 export const mutations = `#graphql 
- BookmarkTweet(BookMarkTweetPayload:BookMarkData):Boolean!
+ BookmarkTweet(payload:BookMarkData):BookMark
 `;

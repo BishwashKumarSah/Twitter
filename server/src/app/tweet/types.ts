@@ -24,6 +24,7 @@ export const types = `#graphql
         likesCount:Int!
         bookmark:[BookMark!]
         isLikedByUser:Boolean!
+        isSavedByUser:Boolean!
     }
 
 `

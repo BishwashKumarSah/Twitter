@@ -1,5 +1,5 @@
 "use client";
-import { useGetAllBookMarkedTweets } from "@/hooks/bookMartTweets";
+import { useGetAllBookMarkedTweets } from "@/hooks/BookMartTweets";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -21,15 +21,9 @@ const BookMarksClientSide = () => {
     return <div>Loading...</div>;
   }
 
-  if (isError) {
-    console.log("BookmarkError", error.message);
+  if (isError) {   
     return toast.error(error.message);
   }
-
-  console.log(
-    "BOOKMarkedTweets",
-    bookMarkedTweets?.map((tweets) => console.log(tweets.tweet))
-  );
 
   const handleBackButton = () => {
     router.back();
