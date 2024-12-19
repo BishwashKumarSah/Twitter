@@ -13,7 +13,7 @@ const queries = {
         throw new Error("Please Login To See All The BookMarks!");
       }
       const allBookMarksCache = await redisClient?.get(
-        `All_BookMarked_Tweets/${ctx.user.id}`
+        `All_BookMarked_Tweets:${ctx.user.id}`
       );
       if (allBookMarksCache) return JSON.parse(allBookMarksCache);
       const allBookMarks = await prismaClient?.bookMark.findMany({
@@ -26,7 +26,7 @@ const queries = {
         },
       });
       await redisClient?.set(
-        `All_BookMarked_Tweets/${ctx.user.id}`,
+        `All_BookMarked_Tweets:${ctx.user.id}`,
         JSON.stringify(allBookMarks)
       );
       // console.log("ALLBOOKMARKS", allBookMarks);
@@ -53,6 +53,17 @@ const mutations = {
       if (!ctx || !ctx.user?.id) {
         throw new Error("Please Login To View Your BookMark!");
       }
+      const BookMarkRateLimit = await redisClient?.get(
+        `BookMark_Rate_Limit:${ctx.user.id}`
+      );
+      if (BookMarkRateLimit) {
+        throw new Error("Please Wait 10 seconds!");
+      }
+      await redisClient?.setex(
+        `BookMark_Rate_Limit:${ctx.user.id}`,
+        10,
+        ctx.user.id
+      );
 
       const hasAlreadyBookMarked = await prismaClient?.bookMark.findUnique({
         where: {
@@ -75,13 +86,14 @@ const mutations = {
         });
 
         // Clear cache
-        await redisClient?.del(`All_BookMarked_Tweets/${ctx.user.id}`);
+        await redisClient?.del(`All_BookMarked_Tweets:${ctx.user.id}`);
+       
 
         return { tweetId: payload.tweetId, userId: ctx.user.id }; // Return the deleted bookmark info
       } else {
         // Fetch the existing bookmarks from cache
         const allBookMarksCache = await redisClient?.get(
-          `All_BookMarked_Tweets/${ctx.user.id}`
+          `All_BookMarked_Tweets:${ctx.user.id}`
         );
 
         // Create a new bookmark
@@ -101,9 +113,6 @@ const mutations = {
           throw new Error("Failed to create bookmark.");
         }
 
-        // Log the new bookmark creation
-        console.log("NewBookMarkCache", newBookMarkTweet);
-
         // Update cache
         if (allBookMarksCache) {
           const newBookMarksCache = [
@@ -111,12 +120,12 @@ const mutations = {
             ...JSON.parse(allBookMarksCache),
           ];
           await redisClient?.set(
-            `All_BookMarked_Tweets/${ctx.user.id}`,
+            `All_BookMarked_Tweets:${ctx.user.id}`,
             JSON.stringify(newBookMarksCache)
           );
         } else {
           await redisClient?.set(
-            `All_BookMarked_Tweets/${ctx.user.id}`,
+            `All_BookMarked_Tweets:${ctx.user.id}`,
             JSON.stringify([newBookMarkTweet]) // Store the new bookmark as an array
           );
         }

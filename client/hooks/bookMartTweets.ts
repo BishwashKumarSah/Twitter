@@ -1,16 +1,11 @@
 "use client";
 
 import { createGraphQLClient } from "@/clients/api";
-import {
-  BookMark,
-  BookMarkData,
-  BookmarkTweetMutation,
-  BookmarkTweetMutationVariables,
-} from "@/gql/graphql";
+import { BookMark, BookMarkData } from "@/gql/graphql";
 import { bookMarkTweetMutation } from "@/graphql/mutate/bookmark";
 import { getAllBookMarkedTweets } from "@/graphql/query/bookmark";
 import { useCookie } from "@/utils/CookieProvider";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const useGetAllBookMarkedTweets = ({ userId }: { userId: string }) => {
   const { cookie } = useCookie();
@@ -27,12 +22,16 @@ export const useGetAllBookMarkedTweets = ({ userId }: { userId: string }) => {
   };
 };
 
-export const useCreateBookMarkedTweets = () => {
+export const useCreateBookMarkedTweets = ({ userId }: { userId: string }) => {
+  const queryClient = useQueryClient();
   const { cookie } = useCookie();
   const graphQLClient = createGraphQLClient(cookie);
+  const queryKeysToInvalidate = [
+    ["get-all-tweets"],
+    ["All_BookMarked_Tweets", userId],
+  ];
   const createBookMarkedTweetsMutation = useMutation({
     mutationFn: async (payload: BookMarkData) => {
-      console.log("payload", payload);
       await graphQLClient.request<{ BookmarkTweet: BookMark }>(
         bookMarkTweetMutation,
         {
@@ -40,7 +39,15 @@ export const useCreateBookMarkedTweets = () => {
         }
       );
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      await Promise.all(
+        queryKeysToInvalidate.map(async (key) => {
+          await queryClient.invalidateQueries({
+            queryKey: key,
+          });
+        })
+      );
+
       console.log("bookMarkData", createBookMarkedTweetsMutation);
     },
   });

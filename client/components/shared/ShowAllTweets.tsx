@@ -12,8 +12,7 @@ const AllTweets: React.FC = () => {
         <h1>Loading...</h1>
       </div>
     );
-  if (isError) {
-   
+  if (isError) {   
     return toast.error("Something Went Wrong!!!");
   }
   return (

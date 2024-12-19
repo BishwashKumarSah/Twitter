@@ -173,6 +173,20 @@ const extraResolvers = {
         throw new Error("Unable to fetch like count");
       }
     },
+    hasBookMarked: async (parent: Tweet, _: any, ctx: GraphqlContext) => {
+      if (!ctx || !ctx.user?.id) return false;
+
+      const hasBookmarkedTweets = await prismaClient.bookMark.findUnique({
+        where: {
+          tweetId_userId: {
+            tweetId: parent.id,
+            userId: ctx.user.id,
+          },
+        },
+      });
+      
+      return hasBookmarkedTweets !== null;
+    },
 
     isLikedByUser: async (parent: Tweet, args: any, ctx: GraphqlContext) => {
       if (!ctx || !ctx.user?.id) return false;
@@ -187,20 +201,7 @@ const extraResolvers = {
       return res !== null;
     },
 
-    isSavedByUser: async (parent: Tweet, args: any, ctx: GraphqlContext) => {
-      if (!ctx || !ctx.user?.id) {
-        throw new Error("Please Login To See The Saved Post!");
-      }
-      const hasSaved = await prismaClient.bookMark.findUnique({
-        where: {
-          tweetId_userId: {
-            tweetId: parent.id,
-            userId: ctx.user.id,
-          },
-        },
-      });
-      return hasSaved !== null;
-    },
+    
   },
 };
 

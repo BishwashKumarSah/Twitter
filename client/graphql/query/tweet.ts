@@ -16,6 +16,7 @@ export const getAllTweetsQuery = graphql(`
       }
       likesCount
       isLikedByUser
+      hasBookMarked
     }
   }
 `);
@@ -56,6 +57,7 @@ export const getAllTweetsByUserId = graphql(`
         }
         likesCount
         isLikedByUser
+        hasBookMarked
       }
     }
   }

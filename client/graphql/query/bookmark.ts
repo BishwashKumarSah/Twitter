@@ -17,6 +17,7 @@ export const getAllBookMarkedTweets = graphql(`
         }
         likesCount
         isLikedByUser
+        hasBookMarked
       }
       userId
       user {

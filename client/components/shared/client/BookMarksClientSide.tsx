@@ -21,7 +21,7 @@ const BookMarksClientSide = () => {
     return <div>Loading...</div>;
   }
 
-  if (isError) {   
+  if (isError) {
     return toast.error(error.message);
   }
 
@@ -45,9 +45,17 @@ const BookMarksClientSide = () => {
           </div>
         </nav>
         <div>
-          {bookMarkedTweets?.map((tweets) => (
-            <FeedCard data={tweets.tweet as Tweet} key={tweets.tweetId} />
-          ))}
+          {bookMarkedTweets && bookMarkedTweets.length > 0 ? (
+            <>
+              {bookMarkedTweets?.map((tweets) => (
+                <FeedCard data={tweets.tweet as Tweet} key={tweets.tweetId} />
+              ))}
+            </>
+          ) : (
+            <div>
+              <p>No BookMarks Yet!</p>
+            </div>
+          )}
         </div>
       </>
     )
