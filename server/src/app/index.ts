@@ -8,6 +8,7 @@ import JWTService from "../services/jwt";
 import { GraphqlContext } from "./interface";
 import { Tweet } from "./tweet";
 import { BookMark } from "./bookmark";
+import { Comment } from "./comment";
 
 export async function initServer() {
   const app = express();
@@ -20,15 +21,18 @@ export async function initServer() {
             ${User.types}
             ${Tweet.types}
             ${BookMark.types}
+            ${Comment.types}
             type Query{
                 ${User.queries}     
                 ${Tweet.queries}  
-                ${BookMark.queries}       
+                ${BookMark.queries}   
+                ${Comment.queries}    
             }        
             type Mutation{
                 ${Tweet.mutations}
                 ${User.mutations}
                 ${BookMark.mutations}
+                ${Comment.mutations}
             }
         `,
     resolvers: {
@@ -36,15 +40,18 @@ export async function initServer() {
         ...User.resolvers.queries,
         ...Tweet.resolvers.queries,
         ...BookMark.resolver.queries,
+        ...Comment.resolvers.queries,
       },
       Mutation: {
         ...Tweet.resolvers.mutations,
         ...User.resolvers.mutations,
         ...BookMark.resolver.mutations,
+        ...Comment.resolvers.mutations,
       },
       ...Tweet.resolvers.extraResolvers,
       ...User.resolvers.extraResolvers,
       ...BookMark.resolver.extraResolver,
+      ...Comment.resolvers.extraResolvers,
     },
   });
 

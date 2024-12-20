@@ -27,6 +27,8 @@ model Tweet {
 
   bookMark BookMark[]
 
+  comment Comment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -42,10 +44,12 @@ model User {
   follower  Follows[] @relation("UserFollower")
   following Follows[] @relation("UserFollowing")
 
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  likes     Likes[]
-  BookMark  BookMark[]
+  likes    Likes[]
+  BookMark BookMark[]
+  comment  Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Follows {
@@ -69,11 +73,24 @@ model Likes {
 }
 
 model BookMark {
-  tweetId String
-  tweet   Tweet  @relation(fields: [tweetId], references: [id])
-  userId  String
-  user    User   @relation(fields: [userId], references: [id])
+  tweetId   String
+  tweet     Tweet    @relation(fields: [tweetId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
 
   @@id([tweetId, userId])
   @@unique([tweetId, userId])
+}
+
+model Comment {
+  id        String   @id @default(cuid()) // Unique ID for each comment
+  content   String
+  tweetId   String
+  tweet     Tweet    @relation(fields: [tweetId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([tweetId, userId])
 }

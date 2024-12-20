@@ -12,6 +12,7 @@ import { ClientError } from "graphql-request";
 import { useCurrentUser } from "@/hooks/user";
 import { useCreateBookMarkedTweets } from "@/hooks/BookMartTweets";
 import { GoBookmark } from "react-icons/go";
+import { usePostCommentByTweetId } from "@/hooks/commets";
 
 interface FeedCardProps {
   data: Tweet;
@@ -21,9 +22,12 @@ const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
   const { user } = useCurrentUser();
   const { mutateAsync } = useLikeTweets({ userId: user ? user?.id : "" });
   const [showMessageTextBox, setShowMessageTextBox] = useState(false);
+  const [content, setContent] = useState("");
   const { mutateAsync: BookMarkTweet } = useCreateBookMarkedTweets({
     userId: user ? user?.id : "",
   });
+
+  const { mutateAsync: TweetComments } = usePostCommentByTweetId();
 
   const handleBookmarkTweet = async (tweetId: string) => {
     try {
@@ -71,8 +75,31 @@ const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
     }
   };
 
-  const handleMessageClick = async (tweetId: string) => {
+  const handleMessageClick = async () => {
     setShowMessageTextBox((prev) => !prev);
+  };
+
+  const handlePostComment = async (tweetId: string) => {
+    try {
+      if (content === "") return;
+      toast.loading("Posting Comment...", { id: `Comment:${tweetId}` });
+      await TweetComments({
+        payload: { tweetId: tweetId, content: content },
+      }).then(() => {
+        setContent("");
+        toast.success("Comment Posted Successfully!", {
+          id: `Comment:${tweetId}`,
+        });
+      });
+    } catch (error) {
+      setContent("");
+      if (error instanceof ClientError) {
+        console.log({ error });
+        toast.error(error.message);
+      } else {
+        toast.error("Error while posting comment!");
+      }
+    }
   };
 
   return (
@@ -113,7 +140,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
               )
           )}
         <div className="flex justify-between items-center max-w-[80%] mt-4 text-[22px]">
-          <div onClick={() => handleMessageClick(data.id)}>
+          <div onClick={() => handleMessageClick()}>
             <BiMessageRounded />
           </div>
           <div onClick={() => handleBookmarkTweet(data.id)}>
@@ -136,14 +163,14 @@ const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
               rows={2}
               placeholder="Post your reply"
               maxLength={70}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
             />
             <div>
               <button
-                className="bg-[#1d9bf0] rounded-full py-1 px-4 w-fit font-semibold text-[16px] disabled:bg-[#0F4E78] disabled:text-[#808080]"
-                disabled={user === undefined || user === null}
-                onClick={() => {
-                  console.log("clicked");
-                }}
+                className="bg-[#1d9bf0] rounded-full py-1 px-4 w-fit font-semibold text-[16px] disabled:bg-[#0F4E78] disabled:text-[#808080] disabled:cursor-not-allowed"
+                disabled={user === undefined || user === null || content === ""}
+                onClick={() => handlePostComment(data.id)}
               >
                 Reply
               </button>

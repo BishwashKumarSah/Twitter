@@ -23,9 +23,10 @@ export const types = `#graphql
         likes:[Likes]
         likesCount:Int!
         bookmark:[BookMark!]
+        comment:[Comment!]
         hasBookMarked:Boolean!
         isLikedByUser:Boolean!
         isSavedByUser:Boolean!
     }
 
-`
+`;
