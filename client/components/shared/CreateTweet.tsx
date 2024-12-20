@@ -135,7 +135,7 @@ const CreateTweet: React.FC = () => {
           <div className="mt-3 flex items-center justify-between">
             <FaRegImage onClick={handleSelectImages} />
             <button
-              className="bg-[#1d9bf0] rounded-full py-2 px-5 font-semibold text-[16px] disabled:bg-[#0F4E78] disabled:text-[#808080]"
+              className="bg-[#1d9bf0] rounded-full py-2 px-5 font-semibold text-[16px] disabled:cursor-not-allowed disabled:bg-[#0F4E78] disabled:text-[#808080]"
               disabled={user === undefined || user === null || content === ""}
               onClick={handleCreateTweet}
             >
