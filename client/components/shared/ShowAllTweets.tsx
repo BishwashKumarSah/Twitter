@@ -4,6 +4,7 @@ import FeedCard from "./feedcard/FeedCard";
 import { Tweet } from "@/gql/graphql";
 import toast from "react-hot-toast";
 
+
 const AllTweets: React.FC = () => {
  const {isLoading,isError,isFetched,allTweets} = useGetAllTweets()
   if (isLoading)

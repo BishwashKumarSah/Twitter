@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { BiMessageRounded } from "react-icons/bi";
 import { FiHeart } from "react-icons/fi";
@@ -23,11 +23,16 @@ const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
   const { mutateAsync } = useLikeTweets({ userId: user ? user?.id : "" });
   const [showMessageTextBox, setShowMessageTextBox] = useState(false);
   const [content, setContent] = useState("");
+  const [hydrationLoad, setHydrationLoad] = useState(false);
+
+  useEffect(() => {
+    setHydrationLoad(true);
+  }, []);
+
+  const { mutateAsync: TweetComments } = usePostCommentByTweetId();
   const { mutateAsync: BookMarkTweet } = useCreateBookMarkedTweets({
     userId: user ? user?.id : "",
   });
-
-  const { mutateAsync: TweetComments } = usePostCommentByTweetId();
 
   const handleBookmarkTweet = async (tweetId: string) => {
     try {
@@ -103,82 +108,103 @@ const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
   };
 
   return (
-    <div className="flex p-4 gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800 hover:bg-gray-950 cursor-pointer">
-      <div>
-        {data.author?.profileImageUrl && (
-          <Image
-            className="rounded-full"
-            src={data.author?.profileImageUrl}
-            height={38}
-            width={38}
-            alt="Profile Image"
-          />
-        )}
-      </div>
-      <div className="w-full">
-        <Link href={`${data.author.id}`}>
-          <h5>{`${data.author?.firstName} ${data.author?.lastName || ""}`}</h5>
-        </Link>
-        <p className="mt-2">{data.content}</p>
-        {data.imageUrl &&
-          data.imageUrl.map(
-            (img) =>
-              img && (
-                <div key={img} className="w-full">
-                  <Image
-                    src={img}
-                    alt="tweet-images"
-                    height={0}
-                    layout="responsive"
-                    width={100}
-                    style={{
-                      height: "auto",
-                      maxHeight: "400px",
-                    }}
-                  />
-                </div>
-              )
-          )}
-        <div className="flex justify-between items-center max-w-[80%] mt-4 text-[22px]">
-          <div onClick={() => handleMessageClick()}>
-            <BiMessageRounded />
-          </div>
-          <div onClick={() => handleBookmarkTweet(data.id)}>
-            {data.hasBookMarked ? <GoBookmarkFill /> : <GoBookmark />}
-          </div>
-          <div className="flex flex-row justify-center items-center gap-2">
-            <div onClick={() => handleLike(data.id)} className="cursor-pointer">
-              {data.isLikedByUser ? <GoHeartFill color="red" /> : <FiHeart />}
-            </div>
-            <span className="text-sm">{data.likesCount}</span>
-          </div>
+    <>
+      {hydrationLoad && (
+        <Link
+          prefetch={false}
+          href={`/tweet/${data.id}`}
+          className="flex p-4 gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800 hover:bg-gray-950 cursor-pointer"
+        >
           <div>
-            <LuUpload />
+            {data.author?.profileImageUrl && (
+              <Image
+                className="rounded-full"
+                src={data.author?.profileImageUrl}
+                height={38}
+                width={38}
+                alt="Profile Image"
+              />
+            )}
           </div>
-        </div>
-        {showMessageTextBox && (
-          <div className="min-w-full flex gap-5 items-center">
-            <textarea
-              className="w-full bg-transparent text-lg focus:outline-0 min-h-[5rem] border-b border-slate-800 pt-4 resize-none"
-              rows={2}
-              placeholder="Post your reply"
-              maxLength={70}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-            />
-            <div>
-              <button
-                className="bg-[#1d9bf0] rounded-full py-1 px-4 w-fit font-semibold text-[16px] disabled:bg-[#0F4E78] disabled:text-[#808080] disabled:cursor-not-allowed"
-                disabled={user === undefined || user === null || content === ""}
-                onClick={() => handlePostComment(data.id)}
-              >
-                Reply
-              </button>
+          <div className="w-full">
+            <div className="w-fit">
+              <Link href={`${data.author.id}`}>
+                <h5>{`${data.author?.firstName} ${
+                  data.author?.lastName || ""
+                }`}</h5>
+              </Link>
             </div>
+            <p className="mt-2">{data.content}</p>
+            {data.imageUrl &&
+              data.imageUrl.map(
+                (img) =>
+                  img && (
+                    <div key={img} className="w-full">
+                      <Image
+                        src={img}
+                        alt="tweet-images"
+                        height={0}
+                        layout="responsive"
+                        width={100}
+                        style={{
+                          height: "auto",
+                          maxHeight: "400px",
+                        }}
+                      />
+                    </div>
+                  )
+              )}
+            <div className="flex justify-between items-center max-w-[80%] mt-4 text-[22px]">
+              <div onClick={() => handleMessageClick()}>
+                <BiMessageRounded />
+              </div>
+              <div onClick={() => handleBookmarkTweet(data.id)}>
+                {data.hasBookMarked ? <GoBookmarkFill /> : <GoBookmark />}
+              </div>
+              <div className="flex flex-row justify-center items-center gap-2">
+                <div
+                  onClick={() => handleLike(data.id)}
+                  className="cursor-pointer"
+                >
+                  {data.isLikedByUser ? (
+                    <GoHeartFill color="red" />
+                  ) : (
+                    <FiHeart />
+                  )}
+                </div>
+                <span className="text-sm">{data.likesCount}</span>
+              </div>
+              <div>
+                <LuUpload />
+              </div>
+            </div>
+            {showMessageTextBox && (
+              <div className="min-w-full flex gap-5 items-center">
+                <textarea
+                  className="w-full bg-transparent text-lg focus:outline-0 min-h-[5rem] border-b border-slate-800 pt-4 resize-none"
+                  rows={2}
+                  placeholder="Post your reply"
+                  maxLength={70}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                />
+                <div>
+                  <button
+                    className="bg-[#1d9bf0] rounded-full py-1 px-4 w-fit font-semibold text-[16px] disabled:bg-[#0F4E78] disabled:text-[#808080] disabled:cursor-not-allowed"
+                    disabled={
+                      user === undefined || user === null || content === ""
+                    }
+                    onClick={() => handlePostComment(data.id)}
+                  >
+                    Reply
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
+        </Link>
+      )}
+    </>
   );
 };
 
