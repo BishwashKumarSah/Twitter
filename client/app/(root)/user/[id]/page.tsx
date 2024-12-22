@@ -6,7 +6,6 @@ const Profile = ({ params }: { params: { id: string } }) => {
   // console.log("userId", userId);
   return (
     <>
-    <div><p>hasasdasdasdasd</p></div>
       <GetTweetsByUserId userId={userId} />
     </>
   );

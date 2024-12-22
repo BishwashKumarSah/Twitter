@@ -54,13 +54,13 @@ const queries = {
     }
 
     const cachedAllUserTweetsById = await redisClient?.get(
-      `allUserTweetsByIddd:${ctx.user.id}`
+      `allUserTweetsByIddd:${userId}`
     );
     if (cachedAllUserTweetsById) return JSON.parse(cachedAllUserTweetsById);
     const getAllUserTweetsById = await UserService.getAllUserTweets(userId);
     // console.log("getAllUserTweetsById",getAllUserTweetsById?.tweets);
     await redisClient?.set(
-      `allUserTweetsByIddd:${ctx.user.id}`,
+      `allUserTweetsByIddd:${userId}`,
       JSON.stringify(getAllUserTweetsById)
     );
     return getAllUserTweetsById;
