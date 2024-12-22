@@ -1,10 +1,20 @@
 "use client";
 
 import { createGraphQLClient } from "@/clients/api";
-import { CreateTweetData, LikeUnlikeTweetData, Tweet } from "@/gql/graphql";
+import {
+  CreateTweetData,
+  GetAllCommentsByTweetIdQueryVariables,
+  GetTweetByIdQuery,
+  LikeUnlikeTweetData,
+  Tweet,
+} from "@/gql/graphql";
 
 import { createNewTweet, likeTweets } from "@/graphql/mutate/tweet";
-import { getAllTweetsByUserId, getAllTweetsQuery } from "@/graphql/query/tweet";
+import {
+  getAllTweetsByUserId,
+  getAllTweetsQuery,
+  getTweetById,
+} from "@/graphql/query/tweet";
 import { useCookie } from "@/utils/CookieProvider";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -98,5 +108,23 @@ export const useGetAllTweetsByUserId = (userId: string) => {
     ...allTweetsByUserIdQuery,
     userInfo: allTweetsByUserIdQuery.data?.getAllUserTweets,
     allTweetsData: allTweetsByUserIdQuery.data?.getAllUserTweets?.tweet,
+  };
+};
+
+export const useGetTweetById = ({ tweetId }: { tweetId: string }) => {
+  const { cookie } = useCookie();
+  const graphqlClient = createGraphQLClient(cookie);
+  const getTweetByIdQuery = useQuery({
+    queryKey: [`tweet:${tweetId}:comment`],
+    queryFn: async () => {
+      return await graphqlClient.request<
+        GetTweetByIdQuery,
+        GetAllCommentsByTweetIdQueryVariables
+      >(getTweetById, { tweetId });
+    },
+  });
+  return {
+    tweetData: getTweetByIdQuery.data?.getTweetById,
+    ...getTweetByIdQuery,
   };
 };

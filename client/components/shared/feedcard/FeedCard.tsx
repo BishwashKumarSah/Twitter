@@ -16,12 +16,13 @@ import { usePostCommentByTweetId } from "@/hooks/commets";
 
 interface FeedCardProps {
   data: Tweet;
+  showComments?: boolean;
 }
 
-const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
+const FeedCard: React.FC<FeedCardProps> = ({ data, showComments = false }) => {
   const { user } = useCurrentUser();
   const { mutateAsync } = useLikeTweets({ userId: user ? user?.id : "" });
-  const [showMessageTextBox, setShowMessageTextBox] = useState(false);
+  const [showMessageTextBox, setShowMessageTextBox] = useState(showComments);
   const [content, setContent] = useState("");
   const [hydrationLoad, setHydrationLoad] = useState(false);
 
@@ -128,7 +129,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
           </div>
           <div className="w-full">
             <div className="w-fit">
-              <Link href={`${data.author.id}`}>
+              <Link href={`/user/${data.author.id}`}>
                 <h5>{`${data.author?.firstName} ${
                   data.author?.lastName || ""
                 }`}</h5>
@@ -203,6 +204,39 @@ const FeedCard: React.FC<FeedCardProps> = ({ data }) => {
             )}
           </div>
         </Link>
+      )}
+      {showComments && (
+        <div>
+          {data.comment?.map((com) => {
+            return (
+              hydrationLoad && (
+                <div className="flex p-4 gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800 hover:bg-gray-950 cursor-pointer">
+                  <div>
+                    {data.author?.profileImageUrl && (
+                      <Image
+                        className="rounded-full"
+                        src={com.user?.profileImageUrl as string}
+                        height={38}
+                        width={38}
+                        alt="Profile Image"
+                      />
+                    )}
+                  </div>
+                  <div className="w-full">
+                    <div className="w-fit">
+                      <Link href={`${com.user?.id}`}>
+                        <h5>{`${com.user?.firstName} ${
+                          com.user?.lastName || ""
+                        }`}</h5>
+                      </Link>
+                    </div>
+                    <p className="mt-2">{com.content}</p>
+                  </div>
+                </div>
+              )
+            );
+          })}
+        </div>
       )}
     </>
   );

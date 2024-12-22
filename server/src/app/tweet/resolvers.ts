@@ -25,6 +25,20 @@ const queries = {
     return allTweets;
   },
 
+  getTweetById: async (
+    _: any,
+    { tweetId }: { tweetId: string },
+    ctx: GraphqlContext
+  ) => {
+    const tweetByIdCache = await redisClient?.get(`tweet:${tweetId}:comment`);
+    if (tweetByIdCache) {
+      return JSON.parse(tweetByIdCache);
+    }
+    const tweet = await TweetService.getTweetById(tweetId);
+    await redisClient?.set(`tweet:${tweetId}:comment`, JSON.stringify(tweet));
+    return tweet;
+  },
+
   getAllUser: async () => UserService.getAllUsers(),
 
   getAllUserTweets: async (
@@ -164,6 +178,14 @@ const extraResolvers = {
       });
     },
 
+    comment: async (parent: Tweet) => {
+      return await prismaClient.comment.findMany({
+        where: {
+          tweetId: parent.id,
+        },
+      });
+    },
+
     likesCount: async (parent: Tweet) => {
       try {
         const val = parent.likesCount; // Return the likesCount stored in the Tweet model
@@ -184,7 +206,7 @@ const extraResolvers = {
           },
         },
       });
-      
+
       return hasBookmarkedTweets !== null;
     },
 
@@ -200,8 +222,6 @@ const extraResolvers = {
       });
       return res !== null;
     },
-
-    
   },
 };
 
