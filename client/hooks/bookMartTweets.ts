@@ -1,7 +1,7 @@
 "use client";
 
 import { createGraphQLClient } from "@/clients/api";
-import { BookMark, BookMarkData } from "@/gql/graphql";
+import { BookMarkData } from "@/gql/graphql";
 import { bookMarkTweetMutation } from "@/graphql/mutate/bookmark";
 import { getAllBookMarkedTweets } from "@/graphql/query/bookmark";
 import { useCookie } from "@/utils/CookieProvider";
@@ -32,12 +32,9 @@ export const useCreateBookMarkedTweets = ({ userId }: { userId: string }) => {
   ];
   const createBookMarkedTweetsMutation = useMutation({
     mutationFn: async (payload: BookMarkData) => {
-      await graphQLClient.request<{ BookmarkTweet: BookMark }>(
-        bookMarkTweetMutation,
-        {
-          payload,
-        }
-      );
+      return await graphQLClient.request(bookMarkTweetMutation, {
+        payload,
+      });
     },
     onSuccess: async () => {
       await Promise.all(
@@ -47,8 +44,6 @@ export const useCreateBookMarkedTweets = ({ userId }: { userId: string }) => {
           });
         })
       );
-
-      console.log("bookMarkData", createBookMarkedTweetsMutation);
     },
   });
   return createBookMarkedTweetsMutation;

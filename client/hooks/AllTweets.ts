@@ -53,16 +53,18 @@ export const useLikeTweets = ({ userId }: { userId: string }) => {
     ["All_BookMarked_Tweets", userId],
   ];
   const likeTweetMutation = useMutation({
-    mutationFn: async (payload: LikeUnlikeTweetData) =>
-      await graphQLClient.request(likeTweets, { payload }),
-    onSuccess: async () =>
+    mutationFn: async (payload: LikeUnlikeTweetData) => {
+      return await graphQLClient.request(likeTweets, { payload });
+    },
+    onSuccess: async () => {
       await Promise.all(
         queryKeysToInvalidate.map(async (key) => {
           await queryClient.invalidateQueries({
             queryKey: key,
           });
         })
-      ),
+      );
+    },
   });
   return likeTweetMutation;
 };

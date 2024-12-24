@@ -46,7 +46,6 @@ const FeedCard: React.FC<FeedCardProps> = ({ data, showComments = false }) => {
         : "Added Post To Bookmark!";
       toast.success(successMessage, { id: tweetId });
     } catch (error) {
-      // Handle errors
       const toastId = `BookMarkError:${tweetId}`;
       toast.dismiss(toastId);
 
@@ -68,6 +67,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ data, showComments = false }) => {
       // Call mutation
       await mutateAsync({ tweetId });
     } catch (error) {
+      console.log("likeTweetError", error);
       // Show error toast
       if (error instanceof ClientError) {
         // console.log("ERRORLIEKS", error.response.errors?.[0]?.message);
@@ -111,76 +111,56 @@ const FeedCard: React.FC<FeedCardProps> = ({ data, showComments = false }) => {
   return (
     <>
       {hydrationLoad && (
-        <Link
-          prefetch={false}
-          href={`/tweet/${data.id}`}
-          className="flex p-4 gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800 hover:bg-gray-950 cursor-pointer"
-        >
-          <div>
-            {data.author?.profileImageUrl && (
-              <Image
-                className="rounded-full"
-                src={data.author?.profileImageUrl}
-                height={38}
-                width={38}
-                alt="Profile Image"
-              />
-            )}
-          </div>
-          <div className="w-full">
-            <div className="w-fit">
-              <Link href={`/user/${data.author.id}`}>
-                <h5>{`${data.author?.firstName} ${
-                  data.author?.lastName || ""
-                }`}</h5>
-              </Link>
-            </div>
-            <p className="mt-2">{data.content}</p>
-            {data.imageUrl &&
-              data.imageUrl.map(
-                (img) =>
-                  img && (
-                    <div key={img} className="w-full">
-                      <Image
-                        src={img}
-                        alt="tweet-images"
-                        height={0}
-                        layout="responsive"
-                        width={100}
-                        style={{
-                          height: "auto",
-                          maxHeight: "400px",
-                        }}
-                      />
-                    </div>
-                  )
+        <div className=" hover:bg-gray-950 cursor-pointer border border-slate-800">
+          <Link
+            prefetch={false}
+            href={`/tweet/${data.id}`}
+            className="flex p-4 gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800 hover:bg-gray-950 cursor-pointer"
+          >
+            <div>
+              {data.author?.profileImageUrl && (
+                <Image
+                  className="rounded-full"
+                  src={data.author?.profileImageUrl}
+                  height={38}
+                  width={38}
+                  alt="Profile Image"
+                />
               )}
-            <div className="flex justify-between items-center max-w-[80%] mt-4 text-[22px]">
-              <div onClick={() => handleMessageClick()}>
-                <BiMessageRounded />
-              </div>
-              <div onClick={() => handleBookmarkTweet(data.id)}>
-                {data.hasBookMarked ? <GoBookmarkFill /> : <GoBookmark />}
-              </div>
-              <div className="flex flex-row justify-center items-center gap-2">
-                <div
-                  onClick={() => handleLike(data.id)}
-                  className="cursor-pointer"
-                >
-                  {data.isLikedByUser ? (
-                    <GoHeartFill color="red" />
-                  ) : (
-                    <FiHeart />
-                  )}
-                </div>
-                <span className="text-sm">{data.likesCount}</span>
-              </div>
-              <div>
-                <LuUpload />
-              </div>
             </div>
+            <div className="w-full">
+              <div className="w-fit">
+                <Link href={`/user/${data.author.id}`}>
+                  <h5>{`${data.author?.firstName} ${
+                    data.author?.lastName || ""
+                  }`}</h5>
+                </Link>
+              </div>
+              <p className="mt-2">{data.content}</p>
+              {data.imageUrl &&
+                data.imageUrl.map(
+                  (img) =>
+                    img && (
+                      <div key={img} className="w-full">
+                        <Image
+                          src={img}
+                          alt="tweet-images"
+                          height={0}
+                          layout="responsive"
+                          width={100}
+                          style={{
+                            height: "auto",
+                            maxHeight: "400px",
+                          }}
+                        />
+                      </div>
+                    )
+                )}
+            </div>
+          </Link>
+          <div className="max-w-[80%] text-[22px] pb-6 mx-auto ">
             {showMessageTextBox && (
-              <div className="min-w-full flex gap-5 items-center">
+              <div className="flex gap-5 items-center min-w-full">
                 <textarea
                   className="w-full bg-transparent text-lg focus:outline-0 min-h-[5rem] border-b border-slate-800 pt-4 resize-none"
                   rows={2}
@@ -203,7 +183,30 @@ const FeedCard: React.FC<FeedCardProps> = ({ data, showComments = false }) => {
               </div>
             )}
           </div>
-        </Link>
+          <div className="flex justify-between items-center max-w-[80%] text-[22px] pb-6 mx-auto">
+            <div className="flex flex-row justify-center items-center gap-2">
+              <div onClick={() => handleMessageClick()}>
+                <BiMessageRounded />
+              </div>
+              <span className="text-sm">{data.commentCount}</span>
+            </div>
+            <div onClick={() => handleBookmarkTweet(data.id)}>
+              {data.hasBookMarked ? <GoBookmarkFill /> : <GoBookmark />}
+            </div>
+            <div className="flex flex-row justify-center items-center gap-2">
+              <div
+                onClick={() => handleLike(data.id)}
+                className="cursor-pointer"
+              >
+                {data.isLikedByUser ? <GoHeartFill color="red" /> : <FiHeart />}
+              </div>
+              <span className="text-sm">{data.likesCount}</span>
+            </div>
+            <div>
+              <LuUpload />
+            </div>
+          </div>
+        </div>
       )}
       {showComments && (
         <div>

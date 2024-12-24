@@ -14,6 +14,7 @@ export const getAllTweetsQuery = graphql(`
         profileImageUrl
         email
       }
+      commentCount
       likesCount
       isLikedByUser
       hasBookMarked
@@ -55,6 +56,7 @@ export const getAllTweetsByUserId = graphql(`
           email
           profileImageUrl
         }
+        commentCount
         likesCount
         isLikedByUser
         hasBookMarked
@@ -78,6 +80,7 @@ export const getTweetById = graphql(`
         profileImageUrl
       }
       isLikedByUser
+      commentCount
       hasBookMarked
       comment {
         content

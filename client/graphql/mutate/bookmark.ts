@@ -2,7 +2,7 @@ import { graphql } from "@/gql";
 
 export const bookMarkTweetMutation = graphql(`
   #graphql
-  mutation BookmarkTweet($payload: BookMarkData) {
+  mutation BookmarkTweet($payload: BookMarkData!) {
     BookmarkTweet(payload: $payload) {
       tweetId
       tweet {

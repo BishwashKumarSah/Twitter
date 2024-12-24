@@ -1,7 +1,5 @@
 "use server";
 import { createGraphQLClient } from "@/clients/api";
-import { BookMarkData } from "@/gql/graphql";
-import { bookMarkTweetMutation } from "@/graphql/mutate/bookmark";
 import { getCookies } from "@/lib/actions/getToken.action";
 import {
   dehydrate,
@@ -10,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import React from "react";
 import BookMarksClientSide from "../client/BookMarksClientSide";
+import { getAllBookMarkedTweets } from "@/graphql/query/bookmark";
 
 const BookMarksServerSide = async ({ userId }: { userId: string }) => {
   if (!userId) return [];
@@ -19,7 +18,7 @@ const BookMarksServerSide = async ({ userId }: { userId: string }) => {
   queryClient.prefetchQuery({
     queryKey: ["BOOKMARKED_TWEETS", userId],
     queryFn: async () => {
-      await graphqlClient.request<BookMarkData>(bookMarkTweetMutation);
+      return await graphqlClient.request(getAllBookMarkedTweets);
     },
   });
   return (

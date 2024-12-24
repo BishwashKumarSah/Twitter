@@ -29,7 +29,7 @@ const queries = {
         `All_BookMarked_Tweets:${ctx.user.id}`,
         JSON.stringify(allBookMarks)
       );
-      // console.log("ALLBOOKMARKS", allBookMarks);
+
       return allBookMarks;
     } catch (error) {
       if (error instanceof Error) {
@@ -87,7 +87,7 @@ const mutations = {
 
         // Clear cache
         await redisClient?.del(`All_BookMarked_Tweets:${ctx.user.id}`);
-       
+        await redisClient?.del("ALL_TWEETS");
 
         return { tweetId: payload.tweetId, userId: ctx.user.id }; // Return the deleted bookmark info
       } else {

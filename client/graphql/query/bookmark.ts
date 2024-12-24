@@ -15,6 +15,7 @@ export const getAllBookMarkedTweets = graphql(`
           email
           profileImageUrl
         }
+        commentCount
         likesCount
         isLikedByUser
         hasBookMarked

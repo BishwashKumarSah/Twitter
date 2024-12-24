@@ -95,7 +95,7 @@ const mutations = {
       `RATE_LIMIT:LIKE:${ctx.user.id}`
     );
     if (RATE_LIMIT_LIKES) {
-      throw new Error("Please wait for 10 seconds to post again!");
+      throw new Error("Please wait for 10 seconds !");
     }
     // 1. Check if the user has already liked the tweet
     const hasAlreadyLiked = await prismaClient.likes.findUnique({
@@ -131,13 +131,13 @@ const mutations = {
         },
       });
       await redisClient?.del("ALL_TWEETS");
-      await redisClient?.del(`All_BookMarked_Tweets/${ctx.user.id}`);
+      await redisClient?.del(`All_BookMarked_Tweets:${ctx.user.id}`);
       await redisClient?.setex(
         `RATE_LIMIT:LIKE:${ctx.user.id}`,
         10,
         ctx.user.id
       );
-      return false; // Tweet unliked
+      return true;
     } else {
       // Add the like to the Likes table
       await prismaClient.likes.create({
@@ -164,7 +164,7 @@ const mutations = {
         ctx.user.id
       );
       await redisClient?.del("ALL_TWEETS");
-      await redisClient?.del(`All_BookMarked_Tweets/${ctx.user.id}`);
+      await redisClient?.del(`All_BookMarked_Tweets:${ctx.user.id}`);
       return true; // Tweet liked
     }
   },
@@ -180,6 +180,13 @@ const extraResolvers = {
 
     comment: async (parent: Tweet) => {
       return await prismaClient.comment.findMany({
+        where: {
+          tweetId: parent.id,
+        },
+      });
+    },
+    commentCount: async (parent: Tweet) => {
+      return await prismaClient.comment.count({
         where: {
           tweetId: parent.id,
         },
