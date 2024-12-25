@@ -25,6 +25,9 @@ export const useGetAllCommentsByTweetId = (tweetId: string) => {
     queryFn: async () => {
       return graphqlClient.request(GetAllCommentsByTweetId, { tweetId });
     },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
   return {
     allComments: getAllCommentsByTweetIdQuery.data,

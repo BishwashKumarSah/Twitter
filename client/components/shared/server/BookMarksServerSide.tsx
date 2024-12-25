@@ -16,7 +16,7 @@ const BookMarksServerSide = async ({ userId }: { userId: string }) => {
   const cookie = await getCookies();
   const graphqlClient = createGraphQLClient(cookie);
   queryClient.prefetchQuery({
-    queryKey: ["BOOKMARKED_TWEETS", userId],
+    queryKey: ["All_BookMarked_Tweets", userId],
     queryFn: async () => {
       return await graphqlClient.request(getAllBookMarkedTweets);
     },

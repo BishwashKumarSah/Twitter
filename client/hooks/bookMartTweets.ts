@@ -15,6 +15,11 @@ export const useGetAllBookMarkedTweets = ({ userId }: { userId: string }) => {
     queryFn: async () => {
       return await graphQLClient.request(getAllBookMarkedTweets);
     },
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
   return {
     bookMarkedTweets: getAllBookMarkedTweetsQuery.data?.getAllUserBookMarks,
@@ -39,7 +44,7 @@ export const useCreateBookMarkedTweets = ({ userId }: { userId: string }) => {
     onSuccess: async () => {
       await Promise.all(
         queryKeysToInvalidate.map(async (key) => {
-          await queryClient.invalidateQueries({
+          await queryClient.refetchQueries({
             queryKey: key,
           });
         })

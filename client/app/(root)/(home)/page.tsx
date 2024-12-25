@@ -17,6 +17,7 @@ import { getCookies } from "@/lib/actions/getToken.action";
 import { createGraphQLClient } from "@/clients/api";
 
 const Home = async () => {
+ 
   const queryClient = new QueryClient();
   const token = await getCookies()
   const graphQLClient = createGraphQLClient(token)

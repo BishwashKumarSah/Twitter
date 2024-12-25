@@ -59,7 +59,7 @@ export const useLikeTweets = ({ userId }: { userId: string }) => {
     onSuccess: async () => {
       await Promise.all(
         queryKeysToInvalidate.map(async (key) => {
-          await queryClient.invalidateQueries({
+          await queryClient.refetchQueries({
             queryKey: key,
           });
         })
@@ -76,6 +76,8 @@ export const useGetAllTweets = () => {
   const allTweetsQuery = useQuery({
     queryKey: ["get-all-tweets"],
     queryFn: async () => await graphQLClient.request(getAllTweetsQuery),
+    staleTime: Infinity, // Keeps data fresh indefinitely
+    gcTime: 1000 * 60 * 60, // Keeps data in cache for 1 hour
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
@@ -104,6 +106,9 @@ export const useGetAllTweetsByUserId = (userId: string) => {
         return null;
       }
     },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
     enabled: !!userId, // Ensures the query only runs if userId is available
   });
   return {
@@ -124,6 +129,9 @@ export const useGetTweetById = ({ tweetId }: { tweetId: string }) => {
         GetAllCommentsByTweetIdQueryVariables
       >(getTweetById, { tweetId });
     },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
   return {
     tweetData: getTweetByIdQuery.data?.getTweetById,

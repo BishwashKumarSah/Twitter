@@ -97,6 +97,7 @@ const mutations = {
     if (RATE_LIMIT_LIKES) {
       throw new Error("Please wait for 10 seconds !");
     }
+    await redisClient?.setex(`RATE_LIMIT:LIKE:${ctx.user.id}`, 10, ctx.user.id);
     // 1. Check if the user has already liked the tweet
     const hasAlreadyLiked = await prismaClient.likes.findUnique({
       where: {
@@ -130,13 +131,9 @@ const mutations = {
           },
         },
       });
-      await redisClient?.del("ALL_TWEETS");
+
       await redisClient?.del(`All_BookMarked_Tweets:${ctx.user.id}`);
-      await redisClient?.setex(
-        `RATE_LIMIT:LIKE:${ctx.user.id}`,
-        10,
-        ctx.user.id
-      );
+      await redisClient?.del("ALL_TWEETS");
       return true;
     } else {
       // Add the like to the Likes table
@@ -158,13 +155,9 @@ const mutations = {
           },
         },
       });
-      await redisClient?.setex(
-        `RATE_LIMIT:LIKE:${ctx.user.id}`,
-        10,
-        ctx.user.id
-      );
-      await redisClient?.del("ALL_TWEETS");
+
       await redisClient?.del(`All_BookMarked_Tweets:${ctx.user.id}`);
+      await redisClient?.del("ALL_TWEETS");
       return true; // Tweet liked
     }
   },
