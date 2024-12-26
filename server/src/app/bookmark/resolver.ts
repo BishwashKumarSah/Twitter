@@ -166,7 +166,7 @@ const extraResolver = {
           id: parent.userId,
         },
       });
-      console.log("bookmarkUser", user);
+
       return user;
     },
   },
