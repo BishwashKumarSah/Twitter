@@ -33,7 +33,7 @@ const LeftSideBar = () => {
     {
       title: "Profile",
       icon: <FaRegUser />,
-      href: user?.id ? `/${user.id}` : "/",
+      href: user?.id ? `/user/${user.id}` : "/",
     },
   ];
   return (

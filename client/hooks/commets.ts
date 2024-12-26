@@ -35,32 +35,38 @@ export const useGetAllCommentsByTweetId = (tweetId: string) => {
   };
 };
 
-export const usePostCommentByTweetId = () => {
+export const usePostCommentByTweetId = ({ userId }: { userId: string }) => {
   const { cookie } = useCookie();
   const graphqlClient = createGraphQLClient(cookie);
   const queryClient = useQueryClient();
+  const queryKeysToInvalidate = [
+    ["get-all-tweets"],
+    ["All_BookMarked_Tweets", userId],
+  ];
   const postCommentByTweetIdMutation = useMutation<
     PostCommentByTweetIdMutation,
     Error,
     PostCommentByTweetIdMutationVariables
   >({
     mutationFn: async (payload: MutationPostCommentByTweetIdArgs) => {
-      console.log("payload", payload);
       return await graphqlClient.request(PostCommentByTweetId, payload);
     },
-    onSuccess: (newData, variables) => {
+    onSuccess: async (newData, variables) => {
       queryClient.setQueryData(
         ["comments", `${variables.payload?.tweetId}`],
         (oldComments: Comment[] | undefined) => {
           if (oldComments) {
-            const res = [...oldComments, newData];
-            console.log({ res });
             return [...oldComments, newData];
           }
-          const newRes = [newData];
-          console.log({ newRes });
           return [newData];
         }
+      );
+      await Promise.all(
+        queryKeysToInvalidate.map(async (key) => {
+          await queryClient.refetchQueries({
+            queryKey: key,
+          });
+        })
       );
     },
   });
