@@ -103,3 +103,26 @@ export const getPreSignedUrl = graphql(`
     getAWSPreSignedUrl(imageName: $imageName, imageType: $imageType)
   }
 `);
+
+export const getTweetsAndUsersQuery = graphql(`
+  #graphql
+  query GetTweetsAndUsersQuery($debouncedSearch: String!) {
+    getTweetsAndUsersQuery(debouncedSearch: $debouncedSearch) {
+      tweet {
+        id
+        content
+      }
+      user {
+        id
+        firstName
+        lastName
+        email
+        following {
+          id
+          email
+        }
+        profileImageUrl
+      }
+    }
+  }
+`);

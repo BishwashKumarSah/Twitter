@@ -4,4 +4,5 @@ export const queries = `#graphql
     getAllUserTweets(userId:String!):User
     getAllUser:[User]
     getAWSPreSignedUrl(imageName:String,imageType:String!):String!    
-`
+    getTweetsAndUsersQuery(debouncedSearch:String!):TweetAndUsers
+`;

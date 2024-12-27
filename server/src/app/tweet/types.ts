@@ -8,6 +8,11 @@ export const types = `#graphql
         tweetId:String!        
     }
 
+    type TweetAndUsers{
+        tweet:[Tweet!]
+        user:[User!]
+    }
+
     type Likes{        
         user:User!
         tweet:Tweet!

@@ -41,6 +41,52 @@ const queries = {
 
   getAllUser: async () => UserService.getAllUsers(),
 
+  // getTweetsAndUsersQuery(debouncedSearch:String!):TweetAndUsers
+  getTweetsAndUsersQuery: async (
+    _: any,
+    { debouncedSearch }: { debouncedSearch: string },
+    ctx: GraphqlContext
+  ) => {
+    const users = await prismaClient.user.findMany({
+      where: {
+        OR: [
+          {
+            firstName: {
+              contains: debouncedSearch,
+              mode: "insensitive",
+            },
+          },
+          {
+            lastName: {
+              contains: debouncedSearch,
+              mode: "insensitive",
+            },
+          },
+          {
+            email: {
+              contains: debouncedSearch,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+    });
+
+    const tweets = await prismaClient.tweet.findMany({
+      where: {
+        content: {
+          contains: debouncedSearch,
+          mode: "insensitive",
+        },
+      },
+    });
+
+    return {
+      tweet: tweets,
+      user: users,
+    };
+  },
+
   getAllUserTweets: async (
     _: any,
     { userId }: { userId: string },
