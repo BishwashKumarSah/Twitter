@@ -1,7 +1,9 @@
 "use client";
 
 import { createGraphQLClient } from "@/clients/api";
+import { GetCurrentUserDetailsIdQuery } from "@/gql/graphql";
 import {
+  getCurrentUserDetailsId,
   getCurrentUserDetailsQuery,
   getUserDetailsByIdWithoutTweets,
 } from "@/graphql/query/user";
@@ -28,6 +30,27 @@ export const useCurrentUser = () => {
     isLoading: query.isLoading,
     isError: query.isError,
     error: query.error,
+  };
+};
+
+export const useCurrentUserDetailsId = () => {
+  const { cookie } = useCookie();
+  const graphqlClient = createGraphQLClient(cookie);
+  const query = useQuery({
+    queryKey: ["current-user-id"],
+    queryFn: async () => {
+      return await graphqlClient.request<GetCurrentUserDetailsIdQuery>(
+        getCurrentUserDetailsId
+      );
+    },
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+  });
+
+  return {
+    userId: query.data?.getCurrentUserDetailsID?.id,
+    ...query,
   };
 };
 

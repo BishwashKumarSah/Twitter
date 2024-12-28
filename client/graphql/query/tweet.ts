@@ -117,7 +117,7 @@ export const getTweetsAndUsersQuery = graphql(`
         firstName
         lastName
         email
-        following {
+        follower {
           id
           email
         }

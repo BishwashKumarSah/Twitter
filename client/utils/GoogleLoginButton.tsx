@@ -10,33 +10,42 @@ import React, { useCallback } from "react";
 import toast from "react-hot-toast";
 
 const GoogleLoginButton: React.FC = () => {
-  const queryClient = useQueryClient()
-  const graphQLClient = createGraphQLClient("")
-  const handleGoogleLogin = useCallback(async (cred: CredentialResponse) => {   
+  const queryClient = useQueryClient();
+  const graphQLClient = createGraphQLClient("");
+  const handleGoogleLogin = useCallback(
+    async (cred: CredentialResponse) => {
+      const googleToken = cred.credential;
 
-    const googleToken = cred.credential;
+      if (!googleToken) return toast.error("Google Token Not Found!");
 
-    if (!googleToken) return toast.error("Google Token Not Found!");
+      try {
+        const { verifyGoogleToken } = await graphQLClient.request(
+          verifyUserGoogleLoginToken,
+          { token: googleToken }
+        );
+        if (verifyGoogleToken) {
+          toast.success("Verification Successful");
+        }
+        const token = verifyGoogleToken || "";
+        await createCampaignCookie(token);
+      } catch (error) {
+        console.log(error);
+        toast.error("Something Went Wrong While Verifying Google Login!");
+      }
+      // console.log("googleToken",token);
 
-    const { verifyGoogleToken } = await graphQLClient.request(
-      verifyUserGoogleLoginToken,
-      { token: googleToken }
-    );
-    toast.success("Verification Successful");
-    const token = verifyGoogleToken || ""
-    console.log("googleToken",token);
-    await createCampaignCookie(token);
+      // if (verifyGoogleToken) {
+      //   window.localStorage.setItem("__twitter_token", verifyGoogleToken);
+      // }
 
-    // if (verifyGoogleToken) {
-    //   window.localStorage.setItem("__twitter_token", verifyGoogleToken);
-    // }
+      queryClient.invalidateQueries({
+        queryKey: ["current-user"],
+      });
 
-    queryClient.invalidateQueries({
-      queryKey:["current-user"]
-    })
-    
-    // console.log({ verifyGoogleToken });
-  }, [graphQLClient,queryClient]);
+      // console.log({ verifyGoogleToken });
+    },
+    [graphQLClient, queryClient]
+  );
 
   return (
     <div className="p-5 rounded-lg w-fit bg-slate-900">

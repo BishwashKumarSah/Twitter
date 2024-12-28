@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FiArrowLeft } from "react-icons/fi";
 import { CiSearch } from "react-icons/ci";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -12,36 +12,57 @@ import {
   GetTweetsAndUsersQueryQuery,
   GetTweetsAndUsersQueryQueryVariables,
 } from "@/gql/graphql";
+import toast from "react-hot-toast";
+import { ClientError } from "graphql-request";
 
 interface CustomLocalSearchProps {
   placeholder: string;
   onDataFetched: (
     data: GetTweetsAndUsersQueryQuery["getTweetsAndUsersQuery"]
   ) => void;
+  query: boolean;
 }
 
 const LocalSearchBar = ({
   placeholder,
   onDataFetched,
+  query,
 }: CustomLocalSearchProps) => {
   const router = useRouter();
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search);
-  console.log("debouncedSearch", debouncedSearch);
+
   const { cookie } = useCookie();
-  const graphQLClient = createGraphQLClient(cookie);
+
+  const graphQLClient = useMemo(() => createGraphQLClient(cookie), [cookie]);
 
   useEffect(() => {
     const getTweetsAndUsers = async () => {
       if (debouncedSearch) {
-        const result = await graphQLClient.request<
-          GetTweetsAndUsersQueryQuery,
-          GetTweetsAndUsersQueryQueryVariables
-        >(getTweetsAndUsersQuery, { debouncedSearch });
+        try {
+          const result = await graphQLClient.request<
+            GetTweetsAndUsersQueryQuery,
+            GetTweetsAndUsersQueryQueryVariables
+          >(getTweetsAndUsersQuery, { debouncedSearch });
+
+          if (result.getTweetsAndUsersQuery) {
+            onDataFetched(result.getTweetsAndUsersQuery);
+          } else {
+            onDataFetched({ tweet: [], user: [] });
+          }
+        } catch (error) {
+          if (error instanceof ClientError) {
+            toast.error(error.message);
+          } else {
+            toast.error("Something went wrong!");
+          }
+          onDataFetched({ tweet: [], user: [] });
+        }
       }
     };
+
     getTweetsAndUsers();
-  }, [debouncedSearch]);
+  }, [debouncedSearch, graphQLClient, onDataFetched, query]); // Only run this effect when debouncedSearch changes
 
   const handleBackButton = () => {
     router.back();

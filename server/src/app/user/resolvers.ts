@@ -11,6 +11,9 @@ const queries = {
   getCurrentUserDetails: async (_: any, args: any, ctx: GraphqlContext) =>
     UserService.getCurrentUserDetails(ctx),
 
+  getCurrentUserDetailsID: async (_: any, args: any, ctx: GraphqlContext) =>
+    UserService.getCurrentUserDetails(ctx),
+
   getUserDetailsByIdWithoutTweets: async (
     _: any,
     { id }: { id: string },
@@ -19,11 +22,17 @@ const queries = {
 };
 
 const mutations = {
-
   followUser: async (_: any, { to }: { to: string }, ctx: GraphqlContext) => {
     if (!ctx || !ctx.user || !ctx.user.id) {
-      return false;
+      throw new Error("Please Login To Follow The User!");
     }
+    const Rate_Limit_Check = await redisClient?.get(`Follow:${ctx.user.id}`);
+
+    if (Rate_Limit_Check) {
+      throw new Error("Please wait 10 sec to perform this action!");
+    }
+
+    await redisClient?.setex(`Follow:${ctx.user.id}`, 10, ctx.user.id);
     const val = await UserService.followUser(ctx.user.id, to);
     await redisClient?.del(`RECOMMENDED_USER:${ctx.user.id}`);
     return val;
@@ -31,13 +40,20 @@ const mutations = {
 
   unFollowUser: async (_: any, { to }: { to: string }, ctx: GraphqlContext) => {
     if (!ctx || !ctx.user || !ctx.user.id) {
-      return false;
+      throw new Error("Please Login To Follow The User!");
     }
+
+    const Rate_Limit_Check = await redisClient?.get(`UnFollow:${ctx.user.id}`);
+
+    if (Rate_Limit_Check) {
+      throw new Error("Please wait 10 sec to perform this action!");
+    }
+
+    await redisClient?.setex(`UnFollow:${ctx.user.id}`, 10, ctx.user.id);
     await UserService.unFollowUser(ctx.user.id, to);
     await redisClient?.del(`RECOMMENDED_USER:${ctx.user.id}`);
     return true;
   },
-
 };
 
 const extraResolvers = {

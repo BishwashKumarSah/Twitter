@@ -1,73 +1,163 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import LocalSearchBar from "@/components/shared/LocalSearchBar";
 import { GetTweetsAndUsersQueryQuery } from "@/gql/graphql";
 import Image from "next/image";
+import { useCurrentUserDetailsId } from "@/hooks/user";
+import { createGraphQLClient } from "@/clients/api";
+import {
+  handleFollowUserMutation,
+  handleUnFollowUserMutation,
+} from "@/graphql/mutate/user";
+import { useCookie } from "@/utils/CookieProvider";
+import { useQueryClient } from "@tanstack/react-query";
+import toast from "react-hot-toast";
+import { ClientError } from "graphql-request";
 
 const Explore = () => {
   const [data, setData] = useState<
     GetTweetsAndUsersQueryQuery["getTweetsAndUsersQuery"] | null
   >(null);
+  const queryClient = useQueryClient();
 
-  const handleDataFetched = (
-    fetchedData: GetTweetsAndUsersQueryQuery["getTweetsAndUsersQuery"]
-  ) => {
-    setData(fetchedData);
-  };
+  const { cookie } = useCookie();
+  const graphQLClient = createGraphQLClient(cookie);
+  const [updateQuery, setUpdatedQuery] = useState(false);
+
+  const handleDataFetched = useCallback(
+    (fetchedData: GetTweetsAndUsersQueryQuery["getTweetsAndUsersQuery"]) => {
+      setData(fetchedData);
+    },
+    []
+  );
+
+  const { userId } = useCurrentUserDetailsId();
+
+  const handleFollowUser = useCallback(
+    async (id: string) => {
+      if (!cookie || cookie === null) {
+        toast.error("Please Login to Follow The User!");
+        return;
+      }
+      try {
+        await graphQLClient.request(handleFollowUserMutation, { to: id });
+        await queryClient.invalidateQueries({
+          queryKey: ["user-details-by-id-without-tweets", id],
+        });
+        await queryClient.invalidateQueries({ queryKey: ["current-user"] });
+        setUpdatedQuery((prev) => !prev);
+      } catch (error) {
+        setUpdatedQuery((prev) => !prev);
+        if (error instanceof ClientError) {
+          toast.error(
+            error.response.errors?.[0]?.message || "Something went wrong!"
+          );
+        } else {
+          toast.error("Something Went Wrong!");
+        }
+      }
+    },
+    [graphQLClient, queryClient, cookie]
+  );
+
+  const handleUnFollowUser = useCallback(
+    async (id: string) => {
+      if (!cookie || cookie === null) {
+        toast.error("Please Login to UnFollow The User!");
+        return;
+      }
+      try {
+        await graphQLClient.request(handleUnFollowUserMutation, { to: id });
+        await queryClient.invalidateQueries({
+          queryKey: ["user-details-by-id-without-tweets", id],
+        });
+        await queryClient.invalidateQueries({ queryKey: ["current-user"] });
+        setUpdatedQuery((prev) => !prev);
+      } catch (error) {
+        setUpdatedQuery((prev) => !prev);
+        if (error instanceof ClientError) {
+          toast.error(
+            error.response.errors?.[0]?.message || "Something went wrong!"
+          );
+        } else {
+          toast.error("Something Went Wrong!");
+        }
+      }
+    },
+    [graphQLClient, queryClient, cookie]
+  );
 
   return (
     <div>
       <LocalSearchBar
         placeholder="Search for users or posts"
         onDataFetched={handleDataFetched}
+        query={updateQuery}
       />
       <div className="mt-5">
         {data ? (
-          <div>
-            <h2 className="text-lg font-bold">Users</h2>
-            {data.user && data.user.length > 0 ? (
-              <ul className="list-disc ml-5">
-                {data.user.map((user) => (
-                  <li key={user.id} className="mb-2">
-                    <p>
-                      <span className="font-semibold">Name:</span>{" "}
-                      {user.firstName} {user.lastName ?? ""}
-                    </p>
-                    <p>
-                      <span className="font-semibold">Email:</span> {user.email}
-                    </p>
-                    {user.profileImageUrl && (
-                      <Image
-                        width={20}
-                        height={20}
-                        src={user.profileImageUrl}
-                        alt={`${user.firstName}'s profile`}
-                        className="w-10 h-10 rounded-full"
-                      />
-                    )}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">No users found.</p>
-            )}
-            <h2 className="text-lg font-bold mt-5">Tweets</h2>
-            {data.tweet && data.tweet.length > 0 ? (
-              <ul className="list-disc ml-5">
-                {data.tweet.map((tweet) => (
-                  <li key={tweet.id} className="mb-2">
-                    <p>{tweet.content}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">No tweets found.</p>
-            )}
-          </div>
+          <>
+            <h1 className="text-[22px] font-bold px-8">Who to follow</h1>
+            {data.user &&
+              data.user.map((userData) => {
+                return (
+                  <>
+                    <div
+                      key={userData.id}
+                      className="flex gap-2 px-8 items-center py-4"
+                    >
+                      <div>
+                        <Image
+                          className="rounded-full"
+                          width={50}
+                          height={50}
+                          alt="User_Avatar"
+                          src={userData.profileImageUrl as string}
+                        />
+                      </div>
+                      <div className="flex  w-full justify-between">
+                        <div>
+                          <h1 className="text-[19px] font-semibold">
+                            {userData.firstName} {userData.lastName}
+                          </h1>
+                          <h3>{userData.email}</h3>
+                          <h2>This is my bio</h2>
+                        </div>
+                        <div className="place-content-center">
+                          {userData?.id !== userId && (
+                            <>
+                              {userData.follower?.some(
+                                (user) => user.id === userId
+                              ) ? (
+                                <button
+                                  className="bg-white text-black px-3 py-1 rounded-full text-md "
+                                  onClick={() =>
+                                    handleUnFollowUser(userData.id)
+                                  }
+                                >
+                                  unfollow
+                                </button>
+                              ) : (
+                                <button
+                                  className="bg-white text-black px-3 py-1 rounded-full text-md"
+                                  onClick={() => handleFollowUser(userData.id)}
+                                >
+                                  follow
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })}
+          </>
         ) : (
-          <p className="text-gray-500">
-            Start typing to search for users or posts.
-          </p>
+          <>
+            <h1>No Tweets or Users Found!</h1>
+          </>
         )}
       </div>
     </div>

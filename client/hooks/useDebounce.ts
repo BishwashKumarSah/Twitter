@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 
-export const useDebounce = <T>(searchQuery: T, delay = 500) => {
+export const useDebounce = <T>(searchQuery: T, delay = 600) => {
   const [debouncedSearchedQuery, setDebouncedSearchedQuery] =
     useState<T>(searchQuery);
 

@@ -95,9 +95,7 @@ const queries = {
     if (!userId || userId === "favicon.ico") {
       throw new Error("Please provide a valid userId to getAllUserTweets");
     }
-    if (!ctx || !ctx.user?.id) {
-      throw new Error("Please provide a valid userId to getAllUserTweets");
-    }
+    
 
     const cachedAllUserTweetsById = await redisClient?.get(
       `allUserTweetsByIddd:${userId}`

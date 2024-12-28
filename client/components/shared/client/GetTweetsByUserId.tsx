@@ -14,6 +14,7 @@ import {
 } from "@/hooks/user";
 import { useCookie } from "@/utils/CookieProvider";
 import { useQueryClient } from "@tanstack/react-query";
+import { ClientError } from "graphql-request";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 
@@ -50,27 +51,61 @@ const Profile = () => {
 
   const handleFollowUser = useCallback(async () => {
     if (!userId || userId === "") return;
-    await graphQLClient.request(handleFollowUserMutation, { to: userId });
-    await queryClient.invalidateQueries({ queryKey: ["user-details-by-id-without-tweets",id] });
-    await queryClient.invalidateQueries({ queryKey: ["current-user"] });
-  }, [graphQLClient, id, queryClient, userId]);
+    if (!cookie || cookie === null) {
+      toast.error("Please Login to Follow The User!");
+      return;
+    }
+    try {
+      await graphQLClient.request(handleFollowUserMutation, { to: userId });
+      await queryClient.invalidateQueries({
+        queryKey: ["user-details-by-id-without-tweets", id],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["current-user"] });
+    } catch (error) {
+      if (error instanceof ClientError) {
+        toast.error(
+          error.response.errors?.[0]?.message || "Something went wrong!"
+        );
+      } else {
+        toast.error("Something Went Wrong!");
+      }
+    }
+  }, [graphQLClient, id, queryClient, userId, cookie]);
 
   const handleUnFollowUser = useCallback(async () => {
     if (!userId || userId === "") return;
-    await graphQLClient.request(handleUnFollowUserMutation, { to: userId });
-    await queryClient.invalidateQueries({ queryKey: ["user-details-by-id-without-tweets",id] });
-    await queryClient.invalidateQueries({ queryKey: ["current-user"] });
-  }, [graphQLClient, id, queryClient, userId]);
+    if (!cookie || cookie === null) {
+      toast.error("Please Login to UnFollow The User!");
+      return;
+    }
+    try {
+      await graphQLClient.request(handleUnFollowUserMutation, { to: userId });
+      await queryClient.invalidateQueries({
+        queryKey: ["user-details-by-id-without-tweets", id],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["current-user"] });
+    } catch (error) {
+      if (error instanceof ClientError) {
+        toast.error(
+          error.response.errors?.[0]?.message || "Something went wrong!"
+        );
+      } else {
+        toast.error("Something Went Wrong!");
+      }
+    }
+  }, [graphQLClient, id, queryClient, userId, cookie]);
 
   const isFollowing = useMemo(() => {
     // console.log("following", currentUser?.following, currentUser?.id, userId);
-    
+
     // console.log("sfasfasdfadf",userDataWithoutTweets?.follower,userId,currentUser?.id);
     if (!userId || userId === "") return false;
     if (
       userDataWithoutTweets?.follower &&
       userDataWithoutTweets?.follower?.length > 0 &&
-      userDataWithoutTweets?.follower?.findIndex((el) => el.id === currentUser?.id) >= 0
+      userDataWithoutTweets?.follower?.findIndex(
+        (el) => el.id === currentUser?.id
+      ) >= 0
     ) {
       return true;
     }
@@ -94,8 +129,10 @@ const Profile = () => {
   };
 
   return (
-    isFetched && userDataWithoutTweetsFetched &&
-    userData && userDataWithoutTweets && (
+    isFetched &&
+    userDataWithoutTweetsFetched &&
+    userData &&
+    userDataWithoutTweets && (
       <>
         <nav className="w-full  flex items-center gap-6 p-3">
           <div
@@ -130,8 +167,12 @@ const Profile = () => {
                   {`${userData.firstName} ${userData.lastName ?? ""}`}
                 </h1>
                 <div className="text-md text-gray-400 flex gap-5 mt-2 font-bold">
-                  <span>{userDataWithoutTweets?.follower?.length} followers</span>
-                  <span>{userDataWithoutTweets?.following?.length} following</span>
+                  <span>
+                    {userDataWithoutTweets?.follower?.length} followers
+                  </span>
+                  <span>
+                    {userDataWithoutTweets?.following?.length} following
+                  </span>
                 </div>
               </div>
               {currentUser?.id !== userId && (

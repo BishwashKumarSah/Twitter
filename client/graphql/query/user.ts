@@ -7,6 +7,14 @@ export const verifyUserGoogleLoginToken = graphql(`
   }
 `);
 
+export const getCurrentUserDetailsId = graphql(`
+  query GetCurrentUserDetailsID {
+    getCurrentUserDetailsID {
+      id
+    }
+  }
+`);
+
 export const getUserDetailsByIdWithoutTweets = graphql(`
   #graphql
   query getUserDetailsByIdWithoutTweets($id: String!) {
