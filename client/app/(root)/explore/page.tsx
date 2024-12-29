@@ -97,7 +97,7 @@ const Explore = () => {
       <div className="mt-5">
         {data ? (
           <>
-            <h1 className="text-[22px] font-bold px-8">Who to follow</h1>
+            <h1 className="text-[22px] font-bold px-8">Who to follow?</h1>
             {data.user &&
               data.user.map((userData) => {
                 return (
