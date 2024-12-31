@@ -15,7 +15,11 @@ const SingleTweetClientComponent = ({ tweetId }: { tweetId: string }) => {
   });
 
   if (isLoading) {
-    return <p>Loading...</p>;
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="w-16 h-16 border-b-4 border-gray-600 rounded-full animate-spin"></div>
+      </div>
+    );
   }
 
   if (isError) {

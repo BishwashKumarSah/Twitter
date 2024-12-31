@@ -11,11 +11,10 @@ const RightSideBar = () => {
   return (
     <>
       <div className="pl-5">
-        <GoogleLoginButton />
         {user && user.id ? (
           <>
             {user.recommendedUsers && user.recommendedUsers.length > 0 && (
-              <div className="px-4 py-2 bg-slate-800 rounded-lg">
+              <div className="px-4 py-2 bg-slate-800 rounded-lg mt-2">
                 <h1 className="my-2 text-2xl">Users you may know?</h1>
 
                 {user.recommendedUsers &&
@@ -48,7 +47,7 @@ const RightSideBar = () => {
             )}
           </>
         ) : (
-          <h1>hi</h1>
+          <GoogleLoginButton />
         )}
       </div>
     </>

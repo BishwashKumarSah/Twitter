@@ -4,7 +4,7 @@ import { BsTwitter } from "react-icons/bs";
 import { GoHome } from "react-icons/go";
 import { HiMagnifyingGlass } from "react-icons/hi2";
 import { SlBell } from "react-icons/sl";
-import { FaRegEnvelope, FaRegBookmark, FaRegUser } from "react-icons/fa";
+import {  FaRegBookmark, FaRegUser } from "react-icons/fa";
 import UserProfile from "../UserProfile";
 import Link from "next/link";
 import { useCurrentUser } from "@/hooks/user";
@@ -24,7 +24,7 @@ const LeftSideBar = () => {
     { title: "Home", icon: <GoHome />, href: "/" },
     { title: "Explore", icon: <HiMagnifyingGlass />, href: "/explore" },
     { title: "Notifications", icon: <SlBell />, href: "/notification" },
-    { title: "Messages", icon: <FaRegEnvelope />, href: "/messages" },
+
     {
       title: "Bookmarks",
       icon: <FaRegBookmark />,

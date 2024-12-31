@@ -26,13 +26,13 @@ export const types = `#graphql
         imageUrl: [String]
         author: User!
         likes:[Likes]
-        likesCount:Int!
+        likesCount:Int
         bookmark:[BookMark!]
         comment:[Comment!]
-        commentCount:Int!
-        hasBookMarked:Boolean!
-        isLikedByUser:Boolean!
-        isSavedByUser:Boolean!
+        commentCount:Int
+        hasBookMarked:Boolean
+        isLikedByUser:Boolean
+        isSavedByUser:Boolean
     }
 
 `;

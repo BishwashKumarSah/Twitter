@@ -157,7 +157,7 @@ const extraResolver = {
           id: parent.tweetId,
         },
       });
-      console.log("bookMarkTweet", tweet);
+  
       return tweet;
     },
     user: async (parent: BookMark) => {

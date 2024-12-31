@@ -17,9 +17,14 @@ import { usePostCommentByTweetId } from "@/hooks/commets";
 interface FeedCardProps {
   data: Tweet;
   showComments?: boolean;
+  includeStats?: boolean;
 }
 
-const FeedCard: React.FC<FeedCardProps> = ({ data, showComments = false }) => {
+const FeedCard: React.FC<FeedCardProps> = ({
+  data,
+  showComments = false,
+  includeStats = true,
+}) => {
   const { user } = useCurrentUser();
   const { mutateAsync } = useLikeTweets({ userId: user ? user?.id : "" });
   const [showMessageTextBox, setShowMessageTextBox] = useState(showComments);
@@ -117,7 +122,7 @@ const FeedCard: React.FC<FeedCardProps> = ({ data, showComments = false }) => {
           <Link
             prefetch={false}
             href={`/tweet/${data.id}`}
-            className="flex p-4 gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800 hover:bg-gray-950 cursor-pointer"
+            className="flex p-4 gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800 hover:bg-gray-950 cursor-pointer  min-w-full"
           >
             <div>
               {data.author?.profileImageUrl && (
@@ -185,29 +190,35 @@ const FeedCard: React.FC<FeedCardProps> = ({ data, showComments = false }) => {
               </div>
             )}
           </div>
-          <div className="flex justify-between items-center max-w-[80%] text-[22px] pb-6 mx-auto">
-            <div className="flex flex-row justify-center items-center gap-2">
-              <div onClick={() => handleMessageClick()}>
-                <BiMessageRounded />
+          {includeStats !== false && (
+            <div className="flex justify-between items-center max-w-[80%] text-[22px] pb-6 mx-auto">
+              <div className="flex flex-row justify-center items-center gap-2">
+                <div onClick={() => handleMessageClick()}>
+                  <BiMessageRounded />
+                </div>
+                <span className="text-sm">{data.commentCount}</span>
               </div>
-              <span className="text-sm">{data.commentCount}</span>
-            </div>
-            <div onClick={() => handleBookmarkTweet(data.id)}>
-              {data.hasBookMarked ? <GoBookmarkFill /> : <GoBookmark />}
-            </div>
-            <div className="flex flex-row justify-center items-center gap-2">
-              <div
-                onClick={() => handleLike(data.id)}
-                className="cursor-pointer"
-              >
-                {data.isLikedByUser ? <GoHeartFill color="red" /> : <FiHeart />}
+              <div onClick={() => handleBookmarkTweet(data.id)}>
+                {data.hasBookMarked ? <GoBookmarkFill /> : <GoBookmark />}
               </div>
-              <span className="text-sm">{data.likesCount}</span>
+              <div className="flex flex-row justify-center items-center gap-2">
+                <div
+                  onClick={() => handleLike(data.id)}
+                  className="cursor-pointer"
+                >
+                  {data.isLikedByUser ? (
+                    <GoHeartFill color="red" />
+                  ) : (
+                    <FiHeart />
+                  )}
+                </div>
+                <span className="text-sm">{data.likesCount}</span>
+              </div>
+              <div>
+                <LuUpload />
+              </div>
             </div>
-            <div>
-              <LuUpload />
-            </div>
-          </div>
+          )}
         </div>
       )}
       {showComments && (

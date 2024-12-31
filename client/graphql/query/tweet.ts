@@ -111,6 +111,14 @@ export const getTweetsAndUsersQuery = graphql(`
       tweet {
         id
         content
+        imageUrl
+        author {
+          id
+          firstName
+          lastName
+          email
+          profileImageUrl
+        }
       }
       user {
         id

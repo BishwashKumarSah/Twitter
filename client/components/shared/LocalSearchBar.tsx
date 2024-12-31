@@ -93,7 +93,7 @@ const LocalSearchBar = ({
             type="text"
             name="local__searchBtn"
             id="searchBtn"
-            className="w-full h-full bg-transparent outline-none focus:outline-none"
+            className="w-full h-full bg-transparent outline-none focus:outline-none shadow-none"
           />
         </div>
       </div>
