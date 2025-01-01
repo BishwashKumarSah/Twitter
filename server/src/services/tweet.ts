@@ -5,9 +5,17 @@ import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { CreateTweetData } from "../app/tweet/resolvers";
 import { redisClient } from "../clients/redis";
 export class TweetService {
-  public static async getAllTweets() {
+  public static async getAllTweets({
+    limit,
+    offset,
+  }: {
+    limit: number;
+    offset: number;
+  }) {
     const tweets = await prismaClient.tweet.findMany({
       orderBy: { createdAt: "desc" },
+      take: limit,
+      skip: offset,
     });
     // console.log("Tweetssssssssss",tweets);
     return tweets;
@@ -29,14 +37,14 @@ export class TweetService {
     payload: CreateTweetData,
     ctx: GraphqlContext
   ) {
-    if (!ctx.user) throw new Error("Please Login To Post a Tweet!");
-    const checkRateLimitUser = await redisClient?.get(
-      `RATE_LIMIT:CREATE_TWEET:${ctx.user.id}`
-    );
-    if (checkRateLimitUser) {
-      throw new Error("Please wait for 10 seconds to post again!");
-    }
-    const cachedAllTweets = await redisClient?.get("ALL_TWEETS");
+    if (!ctx || !ctx.user) throw new Error("Please Login To Post a Tweet!");
+    // const checkRateLimitUser = await redisClient?.get(
+    //   `RATE_LIMIT:CREATE_TWEET:${ctx.user.id}`
+    // );
+    // if (checkRateLimitUser) {
+    //   throw new Error("Please wait for 10 seconds to post again!");
+    // }
+    // const cachedAllTweets = await redisClient?.get("ALL_TWEETS");
 
     const tweet = await prismaClient.tweet.create({
       data: {
@@ -45,17 +53,12 @@ export class TweetService {
         author: { connect: { email: ctx.user.email } },
       },
     });
-    if (cachedAllTweets) {
-      const newTweets = [tweet, ...JSON.parse(cachedAllTweets)];
-      await redisClient?.set("ALL_TWEETS", JSON.stringify(newTweets));
-    } else {
-      await redisClient?.set("ALL_TWEETS", JSON.stringify(tweet));
-    }
-    await redisClient?.setex(
-      `RATE_LIMIT:CREATE_TWEET:${ctx.user.id}`,
-      10,
-      ctx.user.id
-    );
+
+    // await redisClient?.setex(
+    //   `RATE_LIMIT:CREATE_TWEET:${ctx.user.id}`,
+    //   10,
+    //   ctx.user.id
+    // );
     return tweet;
   }
 

@@ -16,31 +16,48 @@ import {
   getTweetById,
 } from "@/graphql/query/tweet";
 import { useCookie } from "@/utils/CookieProvider";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 // mutation to create a tweet
 export const useCreateNewTweet = () => {
-  const queryClient = useQueryClient();
   const { cookie } = useCookie();
   const graphQLClient = createGraphQLClient(cookie);
+  const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: (payload: CreateTweetData) =>
       graphQLClient.request<{ createTweet: Tweet }>(createNewTweet, {
         payload,
       }),
     onSuccess: (newTweetData) => {
-      queryClient.setQueryData<{ getAllTweets: Tweet[] } | undefined>(
-        ["get-all-tweets"],
-        (oldData) => {
-          // console.log("oldData",oldData);
-          const oldTweets = oldData?.getAllTweets || [];
-          const newTweet = newTweetData.createTweet;
-          return { getAllTweets: [newTweet, ...oldTweets] };
-        }
-      );
+      const newTweet = newTweetData.createTweet;
+
+      queryClient.setQueryData<{
+        pages: Array<{ getAllTweets: Tweet[] }>;
+        pageParams: unknown[];
+      }>(["get-all-tweets"], (oldData) => {
+        if (!oldData) return undefined;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page, index) => {
+            if (index === 0) {
+              return {
+                ...page,
+                getAllTweets: [newTweet, ...page.getAllTweets],
+              };
+            }
+            return page;
+          }),
+        };
+      });
     },
   });
-  // console.log("mutationaaaaaaaaaaaaaaaaaaa",mutation);
+
   return mutation;
 };
 
@@ -73,9 +90,22 @@ export const useLikeTweets = ({ userId }: { userId: string }) => {
 export const useGetAllTweets = () => {
   const { cookie } = useCookie();
   const graphQLClient = createGraphQLClient(cookie);
-  const allTweetsQuery = useQuery({
+  const allTweetsQuery = useInfiniteQuery({
     queryKey: ["get-all-tweets"],
-    queryFn: async () => await graphQLClient.request(getAllTweetsQuery),
+    queryFn: async ({ pageParam = 1 }) =>
+      await graphQLClient.request(getAllTweetsQuery, {
+        limit: 10,
+        offset: (pageParam - 1) * 10,
+      }),
+    getNextPageParam: (lastPage, pages) => {
+      console.log({ lastPage, pages });
+      if (lastPage?.getAllTweets?.length) {
+        return pages.length + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+
     staleTime: Infinity, // Keeps data fresh indefinitely
     gcTime: 1000 * 60 * 60, // Keeps data in cache for 1 hour
     refetchOnWindowFocus: false,
@@ -85,7 +115,6 @@ export const useGetAllTweets = () => {
 
   return {
     ...allTweetsQuery,
-    allTweets: allTweetsQuery.data?.getAllTweets,
   };
 };
 

@@ -12,7 +12,7 @@ import { ClientError } from "graphql-request";
 import { useCurrentUser } from "@/hooks/user";
 import { useCreateBookMarkedTweets } from "@/hooks/BookMartTweets";
 import { GoBookmark } from "react-icons/go";
-import { usePostCommentByTweetId } from "@/hooks/commets";
+import { usePostCommentByTweetId } from "@/hooks/comments";
 
 interface FeedCardProps {
   data: Tweet;

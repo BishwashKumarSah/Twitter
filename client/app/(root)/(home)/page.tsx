@@ -17,16 +17,22 @@ import { getCookies } from "@/lib/actions/getToken.action";
 import { createGraphQLClient } from "@/clients/api";
 
 const Home = async () => {
- 
   const queryClient = new QueryClient();
-  const token = await getCookies()
-  const graphQLClient = createGraphQLClient(token)
-  await queryClient.prefetchQuery({
+  const token = await getCookies();
+  const graphQLClient = createGraphQLClient(token);
+  await queryClient.prefetchInfiniteQuery({
     queryKey: ["get-all-tweets"],
-    queryFn: async () => {
-      return await graphQLClient.request(getAllTweetsQuery);
+    queryFn: async ({ pageParam = 1 }) => {
+      const offset = (pageParam - 1) * 10; // Calculate offset based on pageParam
+      return await graphQLClient.request(getAllTweetsQuery, {
+        offset,
+        limit: 10,
+      });
     },
+
+    initialPageParam: 1,
   });
+
   await queryClient.prefetchQuery({
     queryKey: ["current-user"],
     queryFn: async () => {

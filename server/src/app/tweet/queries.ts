@@ -1,5 +1,5 @@
 export const queries = `#graphql
-    getAllTweets:[Tweet]
+    getAllTweets(limit:Int!,offset:Int!):[Tweet!]
     getTweetById(tweetId:String!):Tweet
     getAllUserTweets(userId:String!):User
     getAllUser:[User]

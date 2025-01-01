@@ -3,9 +3,26 @@ import { useGetAllTweets } from "@/hooks/AllTweets";
 import FeedCard from "./feedcard/FeedCard";
 import { Tweet } from "@/gql/graphql";
 import toast from "react-hot-toast";
+import { Fragment, useEffect } from "react";
+import { useInView } from "react-intersection-observer";
 
 const AllTweets: React.FC = () => {
-  const { isLoading, isError, isFetched, allTweets } = useGetAllTweets();
+  const { ref, inView } = useInView();
+  const {
+    isFetchingNextPage,
+    hasNextPage,
+    data,
+    fetchNextPage,
+    isLoading,
+    isError,
+  } = useGetAllTweets();
+
+  useEffect(() => {
+    if (inView) {
+      fetchNextPage();
+    }
+  }, [fetchNextPage, inView]);
+
   if (isLoading)
     return (
       <div className="flex justify-center items-center h-screen">
@@ -15,15 +32,27 @@ const AllTweets: React.FC = () => {
   if (isError) {
     return toast.error("Something Went Wrong!!!");
   }
+
   return (
     <>
-      {isFetched &&
-        allTweets &&
-        allTweets.map((tweet) => (
-          <div key={tweet?.id}>
-            <FeedCard data={tweet as Tweet} />
-          </div>
-        ))}
+      {data &&
+        data.pages.map((group, i) => {
+          return (
+            <Fragment key={i}>
+              {group.getAllTweets?.map((tweet) => (
+                <div key={tweet?.id}>
+                  <FeedCard data={tweet as Tweet} />
+                </div>
+              ))}
+            </Fragment>
+          );
+        })}
+      <div ref={ref}></div>
+      {isFetchingNextPage ? (
+        <h1>Loading More...</h1>
+      ) : hasNextPage ? null : (
+        <h1 className="flex justify-center">No More Posts To Show</h1>
+      )}
     </>
   );
 };

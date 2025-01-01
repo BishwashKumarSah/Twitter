@@ -87,7 +87,7 @@ const CreateTweet: React.FC = () => {
         const errorMessage =
           error?.response?.errors[0]?.message ||
           "Please Wait For 10 seconds!!!";
-        // console.log("errorssssss",error?.response?.errors[0]?.message);
+        console.log("errorssssss", error);
         toast.error(errorMessage, { id: "tweet_post" });
       });
   }, [content, mutateAsync, imageUrl]);

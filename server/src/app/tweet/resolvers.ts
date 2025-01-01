@@ -15,14 +15,24 @@ export interface LikeUnlikeTweetData {
 }
 
 const queries = {
-  getAllTweets: async () => {
-    const cachedAllTweets = await redisClient?.get("ALL_TWEETS");
-    if (cachedAllTweets) {
-      return JSON.parse(cachedAllTweets);
+  getAllTweets: async (
+    _: any,
+    { limit, offset }: { limit: number; offset: number }
+  ) => {
+    const cacheKey = `TWEETS_PAGE_${offset}_${limit}`;
+    const cachedTweets = await redisClient?.get(cacheKey);
+
+    if (cachedTweets) {     
+      return JSON.parse(cachedTweets);
     }
-    const allTweets = await TweetService.getAllTweets();
-    await redisClient?.setex("ALL_TWEETS", 2000, JSON.stringify(allTweets));
-    return allTweets;
+
+   
+    const tweets = await TweetService.getAllTweets({ limit, offset });
+
+    // Cache the paginated result with an expiration time (e.g., 3600 seconds)
+    await redisClient?.setex(cacheKey, 3600, JSON.stringify(tweets));
+
+    return tweets;
   },
 
   getTweetById: async (
@@ -95,7 +105,6 @@ const queries = {
     if (!userId || userId === "favicon.ico") {
       throw new Error("Please provide a valid userId to getAllUserTweets");
     }
-    
 
     const cachedAllUserTweetsById = await redisClient?.get(
       `allUserTweetsByIddd:${userId}`

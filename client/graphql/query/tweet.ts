@@ -2,8 +2,8 @@ import { graphql } from "@/gql";
 
 export const getAllTweetsQuery = graphql(`
   #graphql
-  query getAllTweets {
-    getAllTweets {
+  query GetAllTweets($limit: Int!, $offset: Int!) {
+    getAllTweets(limit: $limit, offset: $offset) {
       id
       content
       imageUrl
