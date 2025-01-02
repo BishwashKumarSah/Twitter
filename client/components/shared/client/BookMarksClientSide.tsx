@@ -56,7 +56,7 @@ const BookMarksClientSide = () => {
               ))}
             </>
           ) : (
-            <div>
+            <div className="flex justify-center">
               <p>No BookMarks Yet!</p>
             </div>
           )}

@@ -70,8 +70,6 @@ const FeedCard: React.FC<FeedCardProps> = ({
   const handleLike = async (tweetId: string) => {
     try {
       // Optimistic UI Update
-
-      // Call mutation
       await mutateAsync({ tweetId });
     } catch (error) {
       console.log("likeTweetError", error);
@@ -119,11 +117,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
     <>
       {hydrationLoad && (
         <div className=" hover:bg-gray-950 cursor-pointer border border-slate-800">
-          <Link
-            prefetch={false}
-            href={`/tweet/${data.id}`}
-            className="flex p-4 gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800 hover:bg-gray-950 cursor-pointer  min-w-full"
-          >
+          <div className="flex p-4 gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800 hover:bg-gray-950 cursor-pointer  min-w-full">
             <div>
               {data.author?.profileImageUrl && (
                 <Image
@@ -136,35 +130,36 @@ const FeedCard: React.FC<FeedCardProps> = ({
               )}
             </div>
             <div className="w-full">
-              <div className="w-fit">
-                <Link href={`/user/${data.author.id}`}>
-                  <h5>{`${data.author?.firstName} ${
-                    data.author?.lastName || ""
-                  }`}</h5>
-                </Link>
-              </div>
-              <p className="mt-2">{data.content}</p>
-              {data.imageUrl &&
-                data.imageUrl.map(
-                  (img) =>
-                    img && (
-                      <div key={img} className="w-full">
-                        <Image
-                          src={img}
-                          alt="tweet-images"
-                          height={0}
-                          layout="responsive"
-                          width={100}
-                          style={{
-                            height: "auto",
-                            maxHeight: "400px",
-                          }}
-                        />
-                      </div>
-                    )
-                )}
+              <Link href={`/user/${data.author.id}`}>
+                <h5>{`${data.author?.firstName} ${
+                  data.author?.lastName || ""
+                }`}</h5>
+              </Link>
+
+              <Link href={`/tweet/${data.id}`}>
+                <p className="mt-2">{data.content}</p>
+                {data.imageUrl &&
+                  data.imageUrl.map(
+                    (img) =>
+                      img && (
+                        <div key={img} className="w-full">
+                          <Image
+                            src={img}
+                            alt="tweet-images"
+                            height={0}
+                            layout="responsive"
+                            width={100}
+                            style={{
+                              height: "auto",
+                              maxHeight: "400px",
+                            }}
+                          />
+                        </div>
+                      )
+                  )}
+              </Link>
             </div>
-          </Link>
+          </div>
           <div className="max-w-[80%] text-[22px] pb-6 mx-auto ">
             {showMessageTextBox && (
               <div className="flex gap-5 items-center min-w-full">

@@ -2,11 +2,13 @@
 
 import { createGraphQLClient } from "@/clients/api";
 import {
+  BookMark,
   CreateTweetData,
   GetAllCommentsByTweetIdQueryVariables,
   GetTweetByIdQuery,
   LikeUnlikeTweetData,
   Tweet,
+  User,
 } from "@/gql/graphql";
 
 import { createNewTweet, likeTweets } from "@/graphql/mutate/tweet";
@@ -23,11 +25,38 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-// mutation to create a tweet
+// Helper to update cached tweet data
+const updateTweetCache = (
+  queryClient: ReturnType<typeof useQueryClient>,
+  queryKey: string[],
+  tweetId: string,
+  updateFn: (tweet: Tweet) => Tweet
+) => {
+  queryClient.setQueryData<{
+    pages: Array<{ getAllTweets: Tweet[] }> | undefined;
+    pageParams: number[] | undefined;
+  }>(queryKey, (oldData) => {
+    if (!oldData) return undefined;
+    return {
+      ...oldData,
+      pages: oldData.pages?.map((page: { getAllTweets: Tweet[] }) => {
+        return {
+          ...page,
+          getAllTweets: page.getAllTweets.map((tweet: Tweet) =>
+            tweet.id === tweetId ? updateFn(tweet) : tweet
+          ),
+        };
+      }),
+    };
+  });
+};
+
+// Mutation to create a tweet
 export const useCreateNewTweet = () => {
   const { cookie } = useCookie();
   const graphQLClient = createGraphQLClient(cookie);
   const queryClient = useQueryClient();
+
   const mutation = useMutation({
     mutationFn: (payload: CreateTweetData) =>
       graphQLClient.request<{ createTweet: Tweet }>(createNewTweet, {
@@ -38,10 +67,14 @@ export const useCreateNewTweet = () => {
 
       queryClient.setQueryData<{
         pages: Array<{ getAllTweets: Tweet[] }>;
-        pageParams: unknown[];
+        pageParams: number[];
       }>(["get-all-tweets"], (oldData) => {
-        if (!oldData) return undefined;
-
+        if (!oldData) {
+          return {
+            pageParams: [1],
+            pages: [{ getAllTweets: [newTweet] }],
+          };
+        }
         return {
           ...oldData,
           pages: oldData.pages.map((page, index) => {
@@ -61,35 +94,92 @@ export const useCreateNewTweet = () => {
   return mutation;
 };
 
+// Mutation to like/unlike a tweet
 export const useLikeTweets = ({ userId }: { userId: string }) => {
   const queryClient = useQueryClient();
   const { cookie } = useCookie();
   const graphQLClient = createGraphQLClient(cookie);
-  const queryKeysToInvalidate = [
-    ["get-all-tweets"],
-    ["All_BookMarked_Tweets", userId],
-  ];
+
   const likeTweetMutation = useMutation({
     mutationFn: async (payload: LikeUnlikeTweetData) => {
       return await graphQLClient.request(likeTweets, { payload });
     },
-    onSuccess: async () => {
-      await Promise.all(
-        queryKeysToInvalidate.map(async (key) => {
-          await queryClient.refetchQueries({
-            queryKey: key,
-          });
-        })
+    onSuccess: (_, { tweetId }) => {
+      // Update "get-all-tweets"
+      updateTweetCache(queryClient, ["get-all-tweets"], tweetId, (tweet) => ({
+        ...tweet,
+        isLikedByUser: !tweet.isLikedByUser,
+        likesCount: tweet.isLikedByUser
+          ? tweet.likesCount - 1
+          : tweet.likesCount + 1,
+      }));
+
+      // Update "All_BookMarked_Tweets" cache directly without refetching
+      queryClient.setQueryData<{ getAllUserBookMarks: BookMark[] }>(
+        ["All_BookMarked_Tweets", userId],
+        (oldData) => {
+          // console.log("oldData", oldData);
+          if (!oldData || !oldData.getAllUserBookMarks) return oldData;
+
+          return {
+            ...oldData,
+            getAllUserBookMarks: oldData.getAllUserBookMarks.map(
+              (bookmarkedTweet: BookMark) => {
+                // Check if the tweet is in the bookmarked list
+                if (bookmarkedTweet.tweetId === tweetId) {
+                  return {
+                    ...bookmarkedTweet,
+                    tweet: {
+                      ...bookmarkedTweet.tweet,
+                      isLikedByUser: !bookmarkedTweet.tweet.isLikedByUser,
+                      likesCount: bookmarkedTweet.tweet.isLikedByUser
+                        ? bookmarkedTweet.tweet.likesCount - 1
+                        : bookmarkedTweet.tweet.likesCount + 1,
+                    },
+                  };
+                }
+                return bookmarkedTweet;
+              }
+            ),
+          };
+        }
+      );
+
+      queryClient.setQueryData<{ getAllUserTweets: User }>(
+        ["all-user-tweets-byId", userId],
+        (oldData) => {
+          if (!oldData) return oldData;
+          // console.log("oldData", oldData.getAllUserTweets);
+          return {
+            getAllUserTweets: {
+              ...oldData.getAllUserTweets,
+              tweet: oldData.getAllUserTweets.tweet?.map((tweet: Tweet) => {
+                if (tweet.id === tweetId) {
+                  return {
+                    ...tweet,
+                    isLikedByUser: !tweet.isLikedByUser,
+                    likesCount: tweet.isLikedByUser
+                      ? tweet.likesCount - 1
+                      : tweet.likesCount + 1,
+                  };
+                }
+                return tweet;
+              }),
+            },
+          };
+        }
       );
     },
   });
+
   return likeTweetMutation;
 };
 
-// query to get all the tweets
+// Query to get all tweets with pagination
 export const useGetAllTweets = () => {
   const { cookie } = useCookie();
   const graphQLClient = createGraphQLClient(cookie);
+
   const allTweetsQuery = useInfiniteQuery({
     queryKey: ["get-all-tweets"],
     queryFn: async ({ pageParam = 1 }) =>
@@ -98,16 +188,14 @@ export const useGetAllTweets = () => {
         offset: (pageParam - 1) * 10,
       }),
     getNextPageParam: (lastPage, pages) => {
-      console.log({ lastPage, pages });
       if (lastPage?.getAllTweets?.length) {
         return pages.length + 1;
       }
       return undefined;
     },
     initialPageParam: 1,
-
-    staleTime: Infinity, // Keeps data fresh indefinitely
-    gcTime: 1000 * 60 * 60, // Keeps data in cache for 1 hour
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
@@ -118,28 +206,29 @@ export const useGetAllTweets = () => {
   };
 };
 
+// Query to get all tweets by a specific user
 export const useGetAllTweetsByUserId = (userId: string) => {
   const { cookie } = useCookie();
   const graphQLClient = createGraphQLClient(cookie);
-  // console.log("userIIIIID",userId);
 
   const allTweetsByUserIdQuery = useQuery({
     queryKey: ["all-user-tweets-byId", userId],
     queryFn: async () => {
       try {
-        return await graphQLClient.request(getAllTweetsByUserId, {
-          userId: userId,
-        });
+        return await graphQLClient.request(getAllTweetsByUserId, { userId });
       } catch (error) {
-        console.log("Error in useGetAllTweetsByUserId hooks allTweets", error);
+        console.error("Error fetching tweets by user:", error);
         return null;
       }
     },
+    staleTime: Infinity,
+    gcTime: 1000 * 60 * 60,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
-    enabled: !!userId, // Ensures the query only runs if userId is available
+    enabled: !!userId,
   });
+
   return {
     ...allTweetsByUserIdQuery,
     userInfo: allTweetsByUserIdQuery.data?.getAllUserTweets,
@@ -147,9 +236,11 @@ export const useGetAllTweetsByUserId = (userId: string) => {
   };
 };
 
+// Query to get a specific tweet by ID
 export const useGetTweetById = ({ tweetId }: { tweetId: string }) => {
   const { cookie } = useCookie();
   const graphqlClient = createGraphQLClient(cookie);
+
   const getTweetByIdQuery = useQuery({
     queryKey: [`tweet:${tweetId}:comment`],
     queryFn: async () => {
@@ -162,6 +253,7 @@ export const useGetTweetById = ({ tweetId }: { tweetId: string }) => {
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
+
   return {
     tweetData: getTweetByIdQuery.data?.getTweetById,
     ...getTweetByIdQuery,

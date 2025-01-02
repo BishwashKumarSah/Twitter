@@ -1,7 +1,7 @@
 "use client";
 
 import { createGraphQLClient } from "@/clients/api";
-import { BookMarkData } from "@/gql/graphql";
+import { BookMark, BookMarkData, Tweet, User } from "@/gql/graphql";
 import { bookMarkTweetMutation } from "@/graphql/mutate/bookmark";
 import { getAllBookMarkedTweets } from "@/graphql/query/bookmark";
 import { useCookie } from "@/utils/CookieProvider";
@@ -31,24 +31,84 @@ export const useCreateBookMarkedTweets = ({ userId }: { userId: string }) => {
   const queryClient = useQueryClient();
   const { cookie } = useCookie();
   const graphQLClient = createGraphQLClient(cookie);
-  const queryKeysToInvalidate = [
-    ["get-all-tweets"],
-    ["All_BookMarked_Tweets", userId],
-  ];
+
   const createBookMarkedTweetsMutation = useMutation({
     mutationFn: async (payload: BookMarkData) => {
       return await graphQLClient.request(bookMarkTweetMutation, {
         payload,
       });
     },
-    onSuccess: async () => {
-      await Promise.all(
-        queryKeysToInvalidate.map(async (key) => {
-          await queryClient.refetchQueries({
-            queryKey: key,
-          });
-        })
+    onSuccess: async (_, { tweetId }) => {
+      queryClient.setQueryData<{ getAllUserBookMarks: BookMark[] }>(
+        ["All_BookMarked_Tweets", userId],
+        (oldData) => {
+          console.log("bookmarkedTweet", oldData);
+          if (!oldData) return undefined;
+          return {
+            ...oldData,
+            getAllUserBookMarks: oldData.getAllUserBookMarks?.filter(
+              (bookmark: BookMark) => {
+                if (bookmark.tweetId !== tweetId) {
+                  return true;
+                }
+                return false;
+              }
+            ),
+          };
+        }
       );
+
+      queryClient.setQueryData<{ getAllUserTweets: User }>(
+        ["all-user-tweets-byId", userId],
+        (oldData) => {
+          console.log("oldDataUserId", oldData);
+          if (!oldData) {
+            return undefined;
+          }
+
+          return {
+            ...oldData,
+            getAllUserTweets: {
+              ...oldData.getAllUserTweets,
+              tweet: oldData.getAllUserTweets.tweet?.map((tweet: Tweet) => {
+                if (tweet.id === tweetId) {
+                  return {
+                    ...tweet,
+                    hasBookMarked: !tweet.hasBookMarked,
+                  };
+                }
+                return tweet;
+              }),
+            },
+          };
+        }
+      );
+
+      queryClient.setQueryData<{
+        pages: Array<{ getAllTweets: Tweet[] }>;
+        pageParams: number[];
+      }>(["get-all-tweets"], (oldData) => {
+        console.log("oldDataAllTweets", oldData);
+        if (!oldData) return undefined;
+
+        return {
+          ...oldData,
+          pages: oldData.pages.map((allTweets: { getAllTweets: Tweet[] }) => {
+            return {
+              ...allTweets,
+              getAllTweets: allTweets.getAllTweets.map((tweet: Tweet) => {
+                if (tweet.id === tweetId) {
+                  return {
+                    ...tweet,
+                    hasBookMarked: !tweet.hasBookMarked,
+                  };
+                }
+                return tweet;
+              }),
+            };
+          }),
+        };
+      });
     },
   });
   return createBookMarkedTweetsMutation;

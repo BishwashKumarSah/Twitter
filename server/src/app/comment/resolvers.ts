@@ -72,7 +72,7 @@ const mutations = {
       ];
       await redisClient?.set(
         `Comments:${payload.tweetId}`,
-        JSON.stringify([newComments])
+        JSON.stringify(newComments)
       );
     } else {
       await redisClient?.set(
@@ -91,6 +91,9 @@ const extraResolvers = {
       return await prismaClient?.tweet.findUnique({
         where: {
           id: parent.tweetId,
+        },
+        include: {
+          comment: true,
         },
       });
     },

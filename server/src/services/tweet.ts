@@ -3,7 +3,7 @@ import { GraphqlContext } from "../app/interface";
 import { prismaClient } from "../clients/db/index";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { CreateTweetData } from "../app/tweet/resolvers";
-import { redisClient } from "../clients/redis";
+
 export class TweetService {
   public static async getAllTweets({
     limit,

@@ -169,7 +169,7 @@ export type Tweet = {
   author: User;
   bookmark?: Maybe<Array<BookMark>>;
   comment?: Maybe<Array<Comment>>;
-  commentCount?: Maybe<Scalars['Int']['output']>;
+  commentCount: Scalars['Int']['output'];
   content: Scalars['String']['output'];
   hasBookMarked?: Maybe<Scalars['Boolean']['output']>;
   id: Scalars['ID']['output'];
@@ -177,7 +177,7 @@ export type Tweet = {
   isLikedByUser?: Maybe<Scalars['Boolean']['output']>;
   isSavedByUser?: Maybe<Scalars['Boolean']['output']>;
   likes?: Maybe<Array<Maybe<Likes>>>;
-  likesCount?: Maybe<Scalars['Int']['output']>;
+  likesCount: Scalars['Int']['output'];
 };
 
 export type TweetAndUsers = {
@@ -197,7 +197,7 @@ export type User = {
   lastName?: Maybe<Scalars['String']['output']>;
   profileImageUrl?: Maybe<Scalars['String']['output']>;
   recommendedUsers?: Maybe<Array<User>>;
-  tweet?: Maybe<Array<Maybe<Tweet>>>;
+  tweet?: Maybe<Array<Tweet>>;
 };
 
 export type BookmarkTweetMutationVariables = Exact<{
@@ -205,7 +205,7 @@ export type BookmarkTweetMutationVariables = Exact<{
 }>;
 
 
-export type BookmarkTweetMutation = { __typename?: 'Mutation', BookmarkTweet?: { __typename?: 'BookMark', tweetId: string, userId: string, tweet: { __typename?: 'Tweet', id: string, content: string, imageUrl?: Array<string | null> | null, likesCount?: number | null, isLikedByUser?: boolean | null, author: { __typename?: 'User', id: string, email: string, firstName: string, lastName?: string | null, profileImageUrl?: string | null } }, user: { __typename?: 'User', id: string, email: string } } | null };
+export type BookmarkTweetMutation = { __typename?: 'Mutation', BookmarkTweet?: { __typename?: 'BookMark', tweetId: string, userId: string, tweet: { __typename?: 'Tweet', id: string, content: string, imageUrl?: Array<string | null> | null, likesCount: number, isLikedByUser?: boolean | null, author: { __typename?: 'User', id: string, email: string, firstName: string, lastName?: string | null, profileImageUrl?: string | null } }, user: { __typename?: 'User', id: string, email: string } } | null };
 
 export type PostCommentByTweetIdMutationVariables = Exact<{
   payload?: InputMaybe<CreateTweetComment>;
@@ -245,7 +245,7 @@ export type UnFollowUserMutation = { __typename?: 'Mutation', unFollowUser: bool
 export type GetAllUserBookMarksQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetAllUserBookMarksQuery = { __typename?: 'Query', getAllUserBookMarks?: Array<{ __typename?: 'BookMark', tweetId: string, userId: string, tweet: { __typename?: 'Tweet', id: string, content: string, imageUrl?: Array<string | null> | null, commentCount?: number | null, likesCount?: number | null, isLikedByUser?: boolean | null, hasBookMarked?: boolean | null, author: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null } }, user: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string } }> | null };
+export type GetAllUserBookMarksQuery = { __typename?: 'Query', getAllUserBookMarks?: Array<{ __typename?: 'BookMark', tweetId: string, userId: string, tweet: { __typename?: 'Tweet', id: string, content: string, imageUrl?: Array<string | null> | null, commentCount: number, likesCount: number, isLikedByUser?: boolean | null, hasBookMarked?: boolean | null, author: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null } }, user: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string } }> | null };
 
 export type GetAllCommentsByTweetIdQueryVariables = Exact<{
   tweetId: Scalars['String']['input'];
@@ -260,21 +260,21 @@ export type GetAllTweetsQueryVariables = Exact<{
 }>;
 
 
-export type GetAllTweetsQuery = { __typename?: 'Query', getAllTweets?: Array<{ __typename?: 'Tweet', id: string, content: string, imageUrl?: Array<string | null> | null, commentCount?: number | null, likesCount?: number | null, isLikedByUser?: boolean | null, hasBookMarked?: boolean | null, author: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, profileImageUrl?: string | null, email: string } }> | null };
+export type GetAllTweetsQuery = { __typename?: 'Query', getAllTweets?: Array<{ __typename?: 'Tweet', id: string, content: string, imageUrl?: Array<string | null> | null, commentCount: number, likesCount: number, isLikedByUser?: boolean | null, hasBookMarked?: boolean | null, author: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, profileImageUrl?: string | null, email: string } }> | null };
 
 export type GetAllUserTweetsQueryVariables = Exact<{
   userId: Scalars['String']['input'];
 }>;
 
 
-export type GetAllUserTweetsQuery = { __typename?: 'Query', getAllUserTweets?: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null, following?: Array<{ __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null }> | null, follower?: Array<{ __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null }> | null, tweet?: Array<{ __typename?: 'Tweet', id: string, content: string, imageUrl?: Array<string | null> | null, commentCount?: number | null, likesCount?: number | null, isLikedByUser?: boolean | null, hasBookMarked?: boolean | null, author: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null } } | null> | null } | null };
+export type GetAllUserTweetsQuery = { __typename?: 'Query', getAllUserTweets?: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null, following?: Array<{ __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null }> | null, follower?: Array<{ __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null }> | null, tweet?: Array<{ __typename?: 'Tweet', id: string, content: string, imageUrl?: Array<string | null> | null, commentCount: number, likesCount: number, isLikedByUser?: boolean | null, hasBookMarked?: boolean | null, author: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null } }> | null } | null };
 
 export type GetTweetByIdQueryVariables = Exact<{
   tweetId: Scalars['String']['input'];
 }>;
 
 
-export type GetTweetByIdQuery = { __typename?: 'Query', getTweetById?: { __typename?: 'Tweet', id: string, content: string, imageUrl?: Array<string | null> | null, isLikedByUser?: boolean | null, commentCount?: number | null, hasBookMarked?: boolean | null, author: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null }, comment?: Array<{ __typename?: 'Comment', content: string, tweetId: string, user?: { __typename?: 'User', id: string, email: string, firstName: string, lastName?: string | null, profileImageUrl?: string | null } | null }> | null } | null };
+export type GetTweetByIdQuery = { __typename?: 'Query', getTweetById?: { __typename?: 'Tweet', id: string, content: string, imageUrl?: Array<string | null> | null, isLikedByUser?: boolean | null, commentCount: number, hasBookMarked?: boolean | null, author: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null }, comment?: Array<{ __typename?: 'Comment', content: string, tweetId: string, user?: { __typename?: 'User', id: string, email: string, firstName: string, lastName?: string | null, profileImageUrl?: string | null } | null }> | null } | null };
 
 export type GetAwsPreSignedUrlQueryVariables = Exact<{
   imageName?: InputMaybe<Scalars['String']['input']>;
@@ -313,7 +313,7 @@ export type GetUserDetailsByIdWithoutTweetsQuery = { __typename?: 'Query', getUs
 export type GetCurrentUserDetailsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetCurrentUserDetailsQuery = { __typename?: 'Query', getCurrentUserDetails?: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null, recommendedUsers?: Array<{ __typename?: 'User', id: string, email: string, firstName: string, lastName?: string | null, profileImageUrl?: string | null }> | null, following?: Array<{ __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null }> | null, follower?: Array<{ __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null }> | null, tweet?: Array<{ __typename?: 'Tweet', id: string, content: string } | null> | null } | null };
+export type GetCurrentUserDetailsQuery = { __typename?: 'Query', getCurrentUserDetails?: { __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null, recommendedUsers?: Array<{ __typename?: 'User', id: string, email: string, firstName: string, lastName?: string | null, profileImageUrl?: string | null }> | null, following?: Array<{ __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null }> | null, follower?: Array<{ __typename?: 'User', id: string, firstName: string, lastName?: string | null, email: string, profileImageUrl?: string | null }> | null, tweet?: Array<{ __typename?: 'Tweet', id: string, content: string }> | null } | null };
 
 
 export const BookmarkTweetDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"BookmarkTweet"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"payload"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"BookMarkData"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"BookmarkTweet"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"payload"},"value":{"kind":"Variable","name":{"kind":"Name","value":"payload"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"tweetId"}},{"kind":"Field","name":{"kind":"Name","value":"tweet"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"content"}},{"kind":"Field","name":{"kind":"Name","value":"imageUrl"}},{"kind":"Field","name":{"kind":"Name","value":"likesCount"}},{"kind":"Field","name":{"kind":"Name","value":"isLikedByUser"}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}},{"kind":"Field","name":{"kind":"Name","value":"firstName"}},{"kind":"Field","name":{"kind":"Name","value":"lastName"}},{"kind":"Field","name":{"kind":"Name","value":"profileImageUrl"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"email"}}]}},{"kind":"Field","name":{"kind":"Name","value":"userId"}}]}}]}}]} as unknown as DocumentNode<BookmarkTweetMutation, BookmarkTweetMutationVariables>;

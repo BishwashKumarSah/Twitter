@@ -19,14 +19,13 @@ const queries = {
     _: any,
     { limit, offset }: { limit: number; offset: number }
   ) => {
-    const cacheKey = `TWEETS_PAGE_${offset}_${limit}`;
+    const cacheKey = `ALL_TWEETS_${offset}_${limit}`;
     const cachedTweets = await redisClient?.get(cacheKey);
 
-    if (cachedTweets) {     
+    if (cachedTweets) {
       return JSON.parse(cachedTweets);
     }
 
-   
     const tweets = await TweetService.getAllTweets({ limit, offset });
 
     // Cache the paginated result with an expiration time (e.g., 3600 seconds)
@@ -132,7 +131,23 @@ const mutations = {
     { payload }: { payload: CreateTweetData },
     ctx: GraphqlContext
   ) => {
-    const newTweet = TweetService.createTweet(payload, ctx);
+    const firstPage = 0;
+    const limit = 10;
+    const cachedTweets = await redisClient?.get(
+      `ALL_TWEETS${firstPage}_${limit}`
+    );
+    const newTweet = await TweetService.createTweet(payload, ctx);
+    if (!cachedTweets) {
+      return await redisClient?.set(
+        `ALL_TWEETS${firstPage}_${limit}`,
+        JSON.stringify(newTweet)
+      );
+    }
+    const newCacheData = [newTweet, ...JSON.parse(cachedTweets)];
+    await redisClient?.set(
+      `ALL_TWEETS${firstPage}_${limit}`,
+      JSON.stringify(newCacheData)
+    );
     // await redisClient?.del("ALL_TWEETS");
     return newTweet;
   },
@@ -144,75 +159,55 @@ const mutations = {
   ) => {
     if (!ctx || !ctx.user?.id)
       throw new Error("Please Login To Perform This Action!");
-    const RATE_LIMIT_LIKES = await redisClient?.get(
-      `RATE_LIMIT:LIKE:${ctx.user.id}`
-    );
-    if (RATE_LIMIT_LIKES) {
-      throw new Error("Please wait for 10 seconds !");
+
+    const { tweetId } = payload;
+    const userId = ctx.user.id;
+
+    // Rate limiting: check if the user is allowed to like/unlike
+    const rateLimitKey = `RATE_LIMIT:LIKE:${userId}`;
+    const isRateLimited = await redisClient?.get(rateLimitKey);
+
+    if (isRateLimited) {
+      throw new Error("Please wait for 10 seconds!");
     }
-    await redisClient?.setex(`RATE_LIMIT:LIKE:${ctx.user.id}`, 10, ctx.user.id);
-    // 1. Check if the user has already liked the tweet
-    const hasAlreadyLiked = await prismaClient.likes.findUnique({
-      where: {
-        tweetId_userId: {
-          tweetId: payload.tweetId,
-          userId: ctx.user.id,
-        },
-      },
+
+    // Set the rate limit key with a 10-second expiration
+    await redisClient?.setex(rateLimitKey, 10, "true");
+
+    // Check if the user has already liked the tweet
+    const hasLiked = await prismaClient.likes.findUnique({
+      where: { tweetId_userId: { tweetId, userId } },
     });
 
-    // 2. If the user has already liked, remove the like
-    if (hasAlreadyLiked) {
-      // Remove the like from the Likes table
+    if (hasLiked) {
+      // Unlike the tweet
       await prismaClient.likes.delete({
-        where: {
-          tweetId_userId: {
-            tweetId: payload.tweetId,
-            userId: ctx.user.id,
-          },
-        },
+        where: { tweetId_userId: { tweetId, userId } },
       });
-
-      // Decrement the like count in the database
       await prismaClient.tweet.update({
-        where: {
-          id: payload.tweetId,
-        },
-        data: {
-          likesCount: {
-            decrement: 1,
-          },
-        },
+        where: { id: tweetId },
+        data: { likesCount: { decrement: 1 } },
       });
-
-      await redisClient?.del(`All_BookMarked_Tweets:${ctx.user.id}`);
-      await redisClient?.del("ALL_TWEETS");
-      return true;
     } else {
-      // Add the like to the Likes table
+      // Like the tweet
       await prismaClient.likes.create({
-        data: {
-          tweetId: payload.tweetId,
-          userId: ctx.user.id,
-        },
+        data: { tweetId, userId },
       });
-
-      // Increment the like count in the database
       await prismaClient.tweet.update({
-        where: {
-          id: payload.tweetId,
-        },
-        data: {
-          likesCount: {
-            increment: 1,
-          },
-        },
+        where: { id: tweetId },
+        data: { likesCount: { increment: 1 } },
       });
-
-      await redisClient?.del(`All_BookMarked_Tweets:${ctx.user.id}`);
-      await redisClient?.del("ALL_TWEETS");
-      return true; // Tweet liked
     }
+
+    // Invalidate affected cache
+    const keysToInvalidate = await redisClient?.keys("ALL_TWEETS_*");
+    if (keysToInvalidate?.length) {
+      await redisClient?.del(keysToInvalidate);
+    }
+    await redisClient?.del(`All_BookMarked_Tweets:${userId}`);
+    await redisClient?.del(`allUserTweetsByIddd:${userId}`);
+
+    return true;
   },
 };
 
@@ -240,13 +235,11 @@ const extraResolvers = {
     },
 
     likesCount: async (parent: Tweet) => {
-      try {
-        const val = parent.likesCount; // Return the likesCount stored in the Tweet model
-        return val;
-      } catch (error) {
-        console.error("Error fetching like count:", error);
-        throw new Error("Unable to fetch like count");
-      }
+      const latestTweet = await prismaClient.tweet.findUnique({
+        where: { id: parent.id },
+        select: { likesCount: true },
+      });
+      return latestTweet?.likesCount || 0; // Return the latest like count from DB
     },
     hasBookMarked: async (parent: Tweet, _: any, ctx: GraphqlContext) => {
       if (!ctx || !ctx.user?.id) return false;

@@ -30,6 +30,7 @@ export class UserService {
       where: {
         id: userId, // matches the unique `id` field of `User`
       },
+
       include: { tweets: true },
     });
   }
