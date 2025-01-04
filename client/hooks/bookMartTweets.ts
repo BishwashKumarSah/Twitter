@@ -109,6 +109,10 @@ export const useCreateBookMarkedTweets = ({ userId }: { userId: string }) => {
           }),
         };
       });
+
+      queryClient.refetchQueries({
+        queryKey: [`tweet:${tweetId}:comment`],
+      });
     },
   });
   return createBookMarkedTweetsMutation;

@@ -80,6 +80,7 @@ export const getTweetById = graphql(`
         profileImageUrl
       }
       isLikedByUser
+      likesCount
       commentCount
       hasBookMarked
       comment {

@@ -169,6 +169,10 @@ export const useLikeTweets = ({ userId }: { userId: string }) => {
           };
         }
       );
+
+      queryClient.refetchQueries({
+        queryKey: [`tweet:${tweetId}:comment`],
+      });
     },
   });
 
