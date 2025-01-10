@@ -1,73 +1,51 @@
 import { createGraphQLClient } from "@/clients/api";
-import {
-  Comment,
-  GetAllCommentsByTweetIdQuery,
-  GetAllCommentsByTweetIdQueryVariables,
-  MutationPostCommentByTweetIdArgs,
-  PostCommentByTweetIdMutation,
-  PostCommentByTweetIdMutationVariables,
-} from "@/gql/graphql";
+import { MutationPostCommentByTweetIdArgs, Tweet } from "@/gql/graphql";
 import { PostCommentByTweetId } from "@/graphql/mutate/comment";
-import { GetAllCommentsByTweetId } from "@/graphql/query/comment";
+
 import { useCookie } from "@/utils/CookieProvider";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export const useGetAllCommentsByTweetId = (tweetId: string) => {
-  const { cookie } = useCookie();
-  const graphqlClient = createGraphQLClient(cookie);
-
-  const getAllCommentsByTweetIdQuery = useQuery<
-    GetAllCommentsByTweetIdQuery,
-    Error,
-    GetAllCommentsByTweetIdQueryVariables
-  >({
-    queryKey: ["comments", tweetId],
-    queryFn: async () => {
-      return graphqlClient.request(GetAllCommentsByTweetId, { tweetId });
-    },
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchOnReconnect: false,
-  });
-  return {
-    allComments: getAllCommentsByTweetIdQuery.data,
-    ...getAllCommentsByTweetIdQuery,
-  };
-};
-
-export const usePostCommentByTweetId = ({ userId }: { userId: string }) => {
+export const usePostCommentByTweetId = () => {
   const { cookie } = useCookie();
   const graphqlClient = createGraphQLClient(cookie);
   const queryClient = useQueryClient();
-  const queryKeysToInvalidate = [
-    ["get-all-tweets"],
-    ["All_BookMarked_Tweets", userId],
-  ];
-  const postCommentByTweetIdMutation = useMutation<
-    PostCommentByTweetIdMutation,
-    Error,
-    PostCommentByTweetIdMutationVariables
-  >({
+  const postCommentByTweetIdMutation = useMutation({
     mutationFn: async (payload: MutationPostCommentByTweetIdArgs) => {
       return await graphqlClient.request(PostCommentByTweetId, payload);
     },
-    onSuccess: async (newData, variables) => {
-      queryClient.setQueryData(
-        ["comments", `${variables.payload?.tweetId}`],
-        (oldComments: Comment[] | undefined) => {
-          if (oldComments) {
-            return [...oldComments, newData];
-          }
-          return [newData];
+    onSuccess: (newData, variables) => {
+      queryClient.refetchQueries({
+        queryKey: [`tweet:${variables.payload?.tweetId}:comment`],
+      });
+
+      queryClient.setQueryData<{
+        pages: Array<{ getAllTweets: Tweet[] }> | undefined;
+        pageParams: number[] | undefined;
+      }>(["get-all-tweets"], (oldData) => {
+        console.log({ oldData });
+        if (!oldData) {
+          return undefined;
         }
-      );
-      await Promise.all(
-        queryKeysToInvalidate.map(async (key) => {
-          await queryClient.refetchQueries({
-            queryKey: key,
-          });
-        })
-      );
+
+        return {
+          ...oldData,
+          pageParams: oldData.pageParams,
+          pages: oldData.pages?.map((page: { getAllTweets: Tweet[] }) => {
+            return {
+              ...page,
+              getAllTweets: page.getAllTweets.map((tweet: Tweet) => {
+                if (tweet.id === variables.payload?.tweetId) {
+                  return {
+                    ...tweet,
+                    commentCount: tweet.commentCount + 1,
+                  };
+                }
+                return tweet;
+              }),
+            };
+          }),
+        };
+      });
     },
   });
   return postCommentByTweetIdMutation;

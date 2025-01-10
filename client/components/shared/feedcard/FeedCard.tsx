@@ -35,9 +35,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
     setHydrationLoad(true);
   }, []);
 
-  const { mutateAsync: TweetComments } = usePostCommentByTweetId({
-    userId: user ? user?.id : "",
-  });
+  const { mutateAsync: TweetComments } = usePostCommentByTweetId();
   const { mutateAsync: BookMarkTweet } = useCreateBookMarkedTweets({
     userId: user ? user?.id : "",
   });
@@ -106,7 +104,10 @@ const FeedCard: React.FC<FeedCardProps> = ({
       setContent("");
       if (error instanceof ClientError) {
         console.log({ error });
-        toast.error(error.message);
+        toast.error(
+          error.response.errors?.[0]?.message || "Something went wrong!",
+          { id: `Comment:${tweetId}` }
+        );
       } else {
         toast.error("Error while posting comment!");
       }
@@ -187,8 +188,11 @@ const FeedCard: React.FC<FeedCardProps> = ({
           </div>
           {includeStats !== false && (
             <div className="flex justify-between items-center max-w-[80%] text-[22px] pb-6 mx-auto">
-              <div className="flex flex-row justify-center items-center gap-2">
-                <div onClick={() => handleMessageClick()}>
+              <div
+                className="flex flex-row justify-center items-center gap-2"
+                onClick={() => handleMessageClick()}
+              >
+                <div>
                   <BiMessageRounded />
                 </div>
                 <span className="text-sm">{data.commentCount}</span>
