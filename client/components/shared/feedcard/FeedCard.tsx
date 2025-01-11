@@ -35,7 +35,9 @@ const FeedCard: React.FC<FeedCardProps> = ({
     setHydrationLoad(true);
   }, []);
 
-  const { mutateAsync: TweetComments } = usePostCommentByTweetId();
+  const { mutateAsync: TweetComments } = usePostCommentByTweetId({
+    userId: user ? user?.id : "",
+  });
   const { mutateAsync: BookMarkTweet } = useCreateBookMarkedTweets({
     userId: user ? user?.id : "",
   });

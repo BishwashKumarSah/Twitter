@@ -51,7 +51,6 @@ const updateTweetCache = (
   });
 };
 
-// Mutation to create a tweet
 export const useCreateNewTweet = () => {
   const { cookie } = useCookie();
   const graphQLClient = createGraphQLClient(cookie);
@@ -65,28 +64,31 @@ export const useCreateNewTweet = () => {
     onSuccess: (newTweetData) => {
       const newTweet = newTweetData.createTweet;
 
+      // Update the cache by adding the new tweet to the first page
       queryClient.setQueryData<{
         pages: Array<{ getAllTweets: Tweet[] }>;
         pageParams: number[];
       }>(["get-all-tweets"], (oldData) => {
-        if (!oldData) {
+        const firstPage = oldData?.pages[0];
+
+        if (firstPage) {
           return {
-            pageParams: [1],
-            pages: [{ getAllTweets: [newTweet] }],
+            ...oldData,
+            pages: [
+              {
+                ...firstPage,
+                getAllTweets: [newTweet, ...firstPage.getAllTweets], // Add new tweet at the start of the first page
+              },
+              ...oldData.pages.slice(1), // Keep the rest of the pages as is
+            ],
           };
         }
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page, index) => {
-            if (index === 0) {
-              return {
-                ...page,
-                getAllTweets: [newTweet, ...page.getAllTweets],
-              };
-            }
-            return page;
-          }),
-        };
+        return oldData; // Return old data if firstPage is not found
+      });
+
+      // Optional: Invalidate queries to ensure data is up-to-date
+      queryClient.invalidateQueries({
+        queryKey: ["get-all-tweets"],
       });
     },
   });

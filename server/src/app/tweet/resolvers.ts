@@ -131,24 +131,43 @@ const mutations = {
     { payload }: { payload: CreateTweetData },
     ctx: GraphqlContext
   ) => {
+    // Rate limiting: check if the user is allowed to like/unlike
+    const rateLimitKey = `RATE_LIMIT:Create:${ctx.user?.id}`;
+    const isRateLimited = await redisClient?.get(rateLimitKey);
+
+    if (isRateLimited) {
+      throw new Error("Please wait for 10 seconds!");
+    }
+
     const firstPage = 0;
     const limit = 10;
-    const cachedTweets = await redisClient?.get(
-      `ALL_TWEETS${firstPage}_${limit}`
-    );
+    const cacheKey = `ALL_TWEETS_${firstPage}_${limit}`;
+
+    // Create the new tweet in the database
     const newTweet = await TweetService.createTweet(payload, ctx);
-    if (!cachedTweets) {
-      return await redisClient?.set(
-        `ALL_TWEETS${firstPage}_${limit}`,
-        JSON.stringify(newTweet)
-      );
+
+    // // Log for debugging
+    // console.log({ newTweet });
+    await redisClient?.setex(rateLimitKey, 10, ctx.user?.id as string);
+
+    // Update or invalidate the cache
+    const cachedTweets = await redisClient?.get(cacheKey);
+
+    if (cachedTweets) {
+      const newCacheData = [newTweet, ...JSON.parse(cachedTweets)];
+
+      // Ensure the cache doesn't exceed the limit (e.g., first page only)
+      const limitedCacheData = newCacheData.slice(0, limit);
+
+      await redisClient?.set(cacheKey, JSON.stringify(limitedCacheData));
+    } else {
+      // Set a new cache if it doesn't exist
+      await redisClient?.set(cacheKey, JSON.stringify([newTweet]));
     }
-    const newCacheData = [newTweet, ...JSON.parse(cachedTweets)];
-    await redisClient?.set(
-      `ALL_TWEETS${firstPage}_${limit}`,
-      JSON.stringify(newCacheData)
-    );
-    // await redisClient?.del("ALL_TWEETS");
+
+    // Optional: Invalidate all other tweet pages to force cache rebuild
+    await redisClient?.del(`ALL_TWEETS_*`);
+
     return newTweet;
   },
 

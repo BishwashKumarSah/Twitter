@@ -1,11 +1,15 @@
 import { createGraphQLClient } from "@/clients/api";
-import { MutationPostCommentByTweetIdArgs, Tweet } from "@/gql/graphql";
+import {
+  BookMark,
+  MutationPostCommentByTweetIdArgs,
+  Tweet,
+} from "@/gql/graphql";
 import { PostCommentByTweetId } from "@/graphql/mutate/comment";
 
 import { useCookie } from "@/utils/CookieProvider";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export const usePostCommentByTweetId = () => {
+export const usePostCommentByTweetId = ({ userId }: { userId: string }) => {
   const { cookie } = useCookie();
   const graphqlClient = createGraphQLClient(cookie);
   const queryClient = useQueryClient();
@@ -22,7 +26,7 @@ export const usePostCommentByTweetId = () => {
         pages: Array<{ getAllTweets: Tweet[] }> | undefined;
         pageParams: number[] | undefined;
       }>(["get-all-tweets"], (oldData) => {
-        console.log({ oldData });
+        // console.log({ oldData });
         if (!oldData) {
           return undefined;
         }
@@ -46,6 +50,32 @@ export const usePostCommentByTweetId = () => {
           }),
         };
       });
+
+      queryClient.setQueryData<{ getAllUserBookMarks: BookMark[] }>(
+        ["All_BookMarked_Tweets", userId],
+        (oldData) => {
+          if (!oldData) {
+            return oldData;
+          }
+          return {
+            ...oldData,
+            getAllUserBookMarks: oldData.getAllUserBookMarks.map(
+              (bookmark: BookMark) => {
+                if (bookmark.tweetId === variables.payload?.tweetId) {
+                  return {
+                    ...bookmark,
+                    tweet: {
+                      ...bookmark.tweet,
+                      commentCount: bookmark.tweet.commentCount + 1,
+                    },
+                  };
+                }
+                return bookmark;
+              }
+            ),
+          };
+        }
+      );
     },
   });
   return postCommentByTweetIdMutation;
