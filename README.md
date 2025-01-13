@@ -31,7 +31,6 @@ A full-featured Twitter clone built with Next.js, Tailwind CSS, GraphQL, and Pri
 ### Frontend
 
 - **Next.js:** For building the application with server-side rendering.
-- **React:** Powers the dynamic and interactive user interface.
 - **Tailwind CSS:** Enables rapid styling and reusable components.
 - **TanStack Query:** Optimizes client-side data caching for smooth performance.
 - **Codegen:** Ensures type-safe GraphQL interactions.
@@ -146,7 +145,6 @@ For issues, feel free to open a new issue on GitHub.
 
 ## License
 
-This project is open-source and available under the [MIT License](LICENSE).
 
 [https://github.com/BishwashKumarSah/Twitter.git](https://github.com/BishwashKumarSah/Twitter.git)
 
