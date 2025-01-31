@@ -9,7 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import React, { useCallback } from "react";
 import toast from "react-hot-toast";
 
-const GoogleLoginButton: React.FC = () => {
+const GoogleLoginButton = ({ disabled = false }: { disabled?: boolean }) => {
   const queryClient = useQueryClient();
   const graphQLClient = createGraphQLClient("");
   const handleGoogleLogin = useCallback(
@@ -21,7 +21,7 @@ const GoogleLoginButton: React.FC = () => {
       try {
         const { verifyGoogleToken } = await graphQLClient.request(
           verifyUserGoogleLoginToken,
-          { token: googleToken }
+          { token: googleToken, type: "id_token" }
         );
         if (verifyGoogleToken) {
           toast.success("Verification Successful");
@@ -48,8 +48,8 @@ const GoogleLoginButton: React.FC = () => {
   );
 
   return (
-    <div className="p-5 rounded-lg w-fit bg-slate-900">
-      <h1 className="mb-2 text-2xl">New to Twitter?</h1>
+    <div className="rounded-lg w-fit">
+      {!disabled && <h1 className="mb-2 text-2xl">New to Twitter?</h1>}
 
       <GoogleLogin onSuccess={(cred) => handleGoogleLogin(cred)} />
     </div>

@@ -46,9 +46,9 @@ const CreateTweet: React.FC = () => {
 
             const url = new URL(getSignedUrl.getAWSPreSignedUrl);
             const getImageUrl = `${url.origin}${url.pathname}`;
-            // console.log("imageUrl", getImageUrl);
+            console.log("getSignedUrl", getSignedUrl);
+            console.log("imageUrl", getImageUrl);
             setImageUrl((prev) => [...prev, getImageUrl]);
-            // console.log("getSignedUrl", getSignedUrl);
             // console.log("data", data);
           }
         }

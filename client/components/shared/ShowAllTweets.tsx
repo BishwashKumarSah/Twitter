@@ -40,14 +40,14 @@ const AllTweets: React.FC = () => {
           return (
             <Fragment key={i}>
               {group.getAllTweets?.map((tweet) => (
-                <div key={tweet?.id}>
+                <div key={tweet?.id} className="text-wrap w-[100%]">
                   <FeedCard data={tweet as Tweet} />
                 </div>
               ))}
             </Fragment>
           );
         })}
-      <div ref={ref}></div>
+      <div ref={ref} className="h-5 w-20"></div>
       {isFetchingNextPage ? (
         <h1>Loading More...</h1>
       ) : hasNextPage ? null : (

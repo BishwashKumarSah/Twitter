@@ -23,6 +23,7 @@ const Home = async () => {
   await queryClient.prefetchInfiniteQuery({
     queryKey: ["get-all-tweets"],
     queryFn: async ({ pageParam = 1 }) => {
+      console.log({pageParam});
       const offset = (pageParam - 1) * 10; // Calculate offset based on pageParam
       return await graphQLClient.request(getAllTweetsQuery, {
         offset,

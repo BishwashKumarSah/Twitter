@@ -1,7 +1,7 @@
 "use client";
 
 import { createGraphQLClient } from "@/clients/api";
-import { BookMark, BookMarkData, Tweet, User } from "@/gql/graphql";
+import {  BookMarkData, Tweet, User } from "@/gql/graphql";
 import { bookMarkTweetMutation } from "@/graphql/mutate/bookmark";
 import { getAllBookMarkedTweets } from "@/graphql/query/bookmark";
 import { useCookie } from "@/utils/CookieProvider";
@@ -39,29 +39,14 @@ export const useCreateBookMarkedTweets = ({ userId }: { userId: string }) => {
       });
     },
     onSuccess: async (_, { tweetId }) => {
-      queryClient.setQueryData<{ getAllUserBookMarks: BookMark[] }>(
-        ["All_BookMarked_Tweets", userId],
-        (oldData) => {
-          console.log("bookmarkedTweet", oldData);
-          if (!oldData) return undefined;
-          return {
-            ...oldData,
-            getAllUserBookMarks: oldData.getAllUserBookMarks?.filter(
-              (bookmark: BookMark) => {
-                if (bookmark.tweetId !== tweetId) {
-                  return true;
-                }
-                return false;
-              }
-            ),
-          };
-        }
-      );
+      queryClient.refetchQueries({
+        queryKey: ["All_BookMarked_Tweets", userId],
+      });
 
       queryClient.setQueryData<{ getAllUserTweets: User }>(
         ["all-user-tweets-byId", userId],
         (oldData) => {
-          console.log("oldDataUserId", oldData);
+          
           if (!oldData) {
             return undefined;
           }
@@ -88,7 +73,7 @@ export const useCreateBookMarkedTweets = ({ userId }: { userId: string }) => {
         pages: Array<{ getAllTweets: Tweet[] }>;
         pageParams: number[];
       }>(["get-all-tweets"], (oldData) => {
-        console.log("oldDataAllTweets", oldData);
+      
         if (!oldData) return undefined;
 
         return {

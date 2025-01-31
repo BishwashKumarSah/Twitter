@@ -9,7 +9,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className="max-w-screen min-h-screen ">
         <main className="grid grid-cols-12 min-h-full w-full max-w-[90%] ml-auto  max-sm:max-w-[100%] ">
           {/* Left Sidebar: Visible on md+ screens */}
-          <div className="col-span-2 sticky top-0  border-gray-300 h-screen max-h-screen pr-4">
+          <div className="col-span-2 sticky top-0  border-gray-300 h-screen max-h-screen lg:pr-4">
             <LeftSideBarServerComponent />
           </div>
 

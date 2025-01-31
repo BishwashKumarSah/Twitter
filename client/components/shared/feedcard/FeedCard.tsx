@@ -42,6 +42,18 @@ const FeedCard: React.FC<FeedCardProps> = ({
     userId: user ? user?.id : "",
   });
 
+  const handleCopyTweetLink = () => {
+    const tweetLink = `${window.location.origin}/tweet/${data.id}`; // Construct the full link
+    navigator.clipboard
+      .writeText(tweetLink)
+      .then(() => {
+        toast.success("Link copied to clipboard!");
+      })
+      .catch(() => {
+        toast.error("Failed to copy the link. Please try again.");
+      });
+  };
+
   const handleBookmarkTweet = async (tweetId: string) => {
     try {
       // Perform the bookmark/unbookmark operation
@@ -119,7 +131,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
   return (
     <>
       {hydrationLoad && (
-        <div className=" hover:bg-gray-950 cursor-pointer border border-slate-800">
+        <div className=" hover:bg-gray-950 cursor-pointer border border-slate-800 ">
           <div className="flex p-4 gap-3 border border-r-0 border-l-0 border-b-0 border-gray-800 hover:bg-gray-950 cursor-pointer  min-w-full">
             <div>
               {data.author?.profileImageUrl && (
@@ -140,7 +152,9 @@ const FeedCard: React.FC<FeedCardProps> = ({
               </Link>
 
               <Link href={`/tweet/${data.id}`}>
-                <p className="mt-2">{data.content}</p>
+                <div className="w-full">
+                  <p className="mt-2  text-wrap break-words">{data.content}</p>
+                </div>
                 {data.imageUrl &&
                   data.imageUrl.map(
                     (img) =>
@@ -216,7 +230,7 @@ const FeedCard: React.FC<FeedCardProps> = ({
                 <span className="text-sm">{data.likesCount}</span>
               </div>
               <div>
-                <LuUpload />
+                <LuUpload onClick={handleCopyTweetLink} />
               </div>
             </div>
           )}

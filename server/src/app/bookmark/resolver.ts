@@ -2,20 +2,27 @@ import { BookMark, User } from "@prisma/client";
 import { redisClient } from "../../clients/redis";
 import { GraphqlContext } from "../interface";
 
-export interface BookMarkTweetInterface {
+export interface BookMarkTweetInput {
   tweetId: string;
 }
 
+const formatError = (error: unknown): Error => {
+  if (error instanceof Error) {
+    return new Error(error.message);
+  }
+  return new Error("An unexpected error occurred!");
+};
+
 const queries = {
-  getAllUserBookMarks: async (_: any, payload: any, ctx: GraphqlContext) => {
+  getAllUserBookMarks: async (_: any, __: any, ctx: GraphqlContext) => {
     try {
-      if (!ctx || !ctx?.user?.id) {
-        throw new Error("Please Login To See All The BookMarks!");
+      if (!ctx?.user?.id) {
+        throw new Error("Please login to see all the bookmarks!");
       }
-      const allBookMarksCache = await redisClient?.get(
-        `All_BookMarked_Tweets:${ctx.user.id}`
-      );
-      if (allBookMarksCache) return JSON.parse(allBookMarksCache);
+      const cacheKey = `All_BookMarked_Tweets:${ctx.user.id}`;
+      const cachedBookmark = await redisClient?.get(cacheKey);
+
+      if (cachedBookmark) return JSON.parse(cachedBookmark);
       const allBookMarks = await prismaClient?.bookMark.findMany({
         where: {
           userId: ctx.user.id,
@@ -25,20 +32,12 @@ const queries = {
           user: true,
         },
       });
-      await redisClient?.set(
-        `All_BookMarked_Tweets:${ctx.user.id}`,
-        JSON.stringify(allBookMarks)
-      );
+
+      await redisClient?.set(cacheKey, JSON.stringify(allBookMarks));
 
       return allBookMarks;
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Error(error.message);
-      } else {
-        throw new Error(
-          "An unknown error occurred while fetching bookmarked tweets!"
-        );
-      }
+    } catch (error: unknown) {
+      throw formatError(error);
     }
   },
 };
@@ -46,24 +45,27 @@ const queries = {
 const mutations = {
   BookmarkTweet: async (
     _: any,
-    { payload }: { payload: BookMarkTweetInterface },
+    { payload }: { payload: BookMarkTweetInput },
     ctx: GraphqlContext
   ) => {
     try {
-      if (!ctx || !ctx.user?.id) {
-        throw new Error("Please Login To View Your BookMark!");
+      if (!ctx?.user?.id) {
+        throw new Error("Please login to manage your bookmarks!");
       }
-      const BookMarkRateLimit = await redisClient?.get(
-        `BookMark_Rate_Limit:${ctx.user.id}`
-      );
+
+      const rateLimitKey = `BookMark_Rate_Limit:${ctx.user.id}`;
+      const cacheKey = `All_BookMarked_Tweets:${ctx.user.id}`;
+      const BookMarkRateLimit = await redisClient?.get(rateLimitKey);
+
       if (BookMarkRateLimit) {
-        throw new Error("Please Wait 10 seconds!");
+        const ttl = await redisClient?.ttl(rateLimitKey);
+        throw new Error(`Please wait ${ttl} seconds before bookmarking again!`);
       }
-      await redisClient?.setex(
-        `BookMark_Rate_Limit:${ctx.user.id}`,
-        10,
-        ctx.user.id
-      );
+
+      await redisClient?.setex(rateLimitKey, 10, ctx.user.id);
+
+      // Clear relevant cache
+      await redisClient?.del(cacheKey);
 
       const hasAlreadyBookMarked = await prismaClient?.bookMark.findUnique({
         where: {
@@ -85,17 +87,8 @@ const mutations = {
           },
         });
 
-        // Clear cache
-        await redisClient?.del(`All_BookMarked_Tweets:${ctx.user.id}`);
-        await redisClient?.del("ALL_TWEETS");
-
-        return { tweetId: payload.tweetId, userId: ctx.user.id }; // Return the deleted bookmark info
+        return { tweetId: payload.tweetId, userId: ctx.user.id };
       } else {
-        // Fetch the existing bookmarks from cache
-        const allBookMarksCache = await redisClient?.get(
-          `All_BookMarked_Tweets:${ctx.user.id}`
-        );
-
         // Create a new bookmark
         const newBookMarkTweet = await prismaClient?.bookMark.create({
           data: {
@@ -108,43 +101,15 @@ const mutations = {
           },
         });
 
-        // Check if the new bookmark creation was successful
-        if (!newBookMarkTweet) {
-          throw new Error("Failed to create bookmark.");
-        }
-
-        // Update cache
-        if (allBookMarksCache) {
-          const newBookMarksCache = [
-            newBookMarkTweet,
-            ...JSON.parse(allBookMarksCache),
-          ];
-          await redisClient?.set(
-            `All_BookMarked_Tweets:${ctx.user.id}`,
-            JSON.stringify(newBookMarksCache)
-          );
-        } else {
-          await redisClient?.set(
-            `All_BookMarked_Tweets:${ctx.user.id}`,
-            JSON.stringify([newBookMarkTweet]) // Store the new bookmark as an array
-          );
-        }
-
         return {
-          tweetId: newBookMarkTweet.tweetId,
-          tweet: newBookMarkTweet.tweet,
-          user: newBookMarkTweet.user,
-          userId: newBookMarkTweet.userId,
-        }; // Return the created bookmark info
+          tweetId: newBookMarkTweet?.tweetId,
+          tweet: newBookMarkTweet?.tweet,
+          user: newBookMarkTweet?.user,
+          userId: newBookMarkTweet?.userId,
+        };
       }
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("BookmarkError", error);
-        throw new Error(error.message || "An unexpected error occurred!");
-      } else {
-        console.error("BookmarkError An unknown error occurred");
-        throw new Error("An unexpected error occurred While BookMarking!");
-      }
+      throw formatError(error);
     }
   },
 };
@@ -157,7 +122,7 @@ const extraResolver = {
           id: parent.tweetId,
         },
       });
-  
+
       return tweet;
     },
     user: async (parent: BookMark) => {

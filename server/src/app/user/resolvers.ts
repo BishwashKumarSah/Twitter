@@ -5,8 +5,10 @@ import { UserService } from "../../services/user";
 import { redisClient } from "../../clients/redis";
 
 const queries = {
-  verifyGoogleToken: async (_: any, { token }: { token: string }) =>
-    UserService.getJWTToken(token),
+  verifyGoogleToken: async (
+    _: any,
+    { token, type }: { token: string; type: string }
+  ) => UserService.getJWTToken(token, type),
 
   getCurrentUserDetails: async (_: any, args: any, ctx: GraphqlContext) =>
     UserService.getCurrentUserDetails(ctx),

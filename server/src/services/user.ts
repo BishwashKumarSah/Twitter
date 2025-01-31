@@ -39,13 +39,18 @@ export class UserService {
     return await prismaClient.user.findMany({});
   }
 
-  public static async getJWTToken(token: string) {
+  public static async getJWTToken(token: string, type: string) {
     // 1. here first i am taking to the google api to send the details regarding this particular user.
     // 2. if the user doesnot exists then create that user
     // 3. now that i have created the user i will check the db for that user again even though we can skip this part but for safe side if it is not created in db that why we are again checking that user
     // 4. i have created a utility class that will generate the token for me i will pass the user obj to that utility function.
 
-    const googleOAuthURL = `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`;
+    let googleOAuthURL = "";
+    if (type === "id_token") {
+      googleOAuthURL = `https://oauth2.googleapis.com/tokeninfo?id_token=${token}`;
+    } else if (type === "access_token") {
+      googleOAuthURL = `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`;
+    }
     const { data } = await axios.get<GoogleAuthResponse>(googleOAuthURL, {
       responseType: "json",
     });
